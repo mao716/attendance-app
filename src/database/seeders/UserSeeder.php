@@ -19,19 +19,21 @@ class UserSeeder extends Seeder
 			'email_verified_at' => now(),
 		]);
 
-		// 一般ユーザー3名
+		// 一般ユーザー5名
 		$generalUsers = [
-			'user1@example.com',
-			'user2@example.com',
-			'user3@example.com',
+			['name' => '佐藤 花子',  'email' => 'user1@example.com'],
+			['name' => '鈴木 次郎',  'email' => 'user2@example.com'],
+			['name' => '高橋 美咲',  'email' => 'user3@example.com'],
+			['name' => '田中 大輝',  'email' => 'user4@example.com'],
+			['name' => '山本 莉子',  'email' => 'user5@example.com'],
 		];
 
-		foreach ($generalUsers as $index => $email) {
+		foreach ($generalUsers as $user) {
 			User::create([
-				'name' => '一般ユーザー' . ($index + 1),
-				'email' => $email,
+				'name' => $user['name'],
+				'email' => $user['email'],
 				'password' => Hash::make('password123'),
-				'role' => 1, // 一般ユーザー
+				'role' => 1,
 				'email_verified_at' => now(),
 			]);
 		}
