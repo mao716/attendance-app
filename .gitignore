@@ -1,0 +1,22 @@
+# --- Laravel (src) ---
+src/vendor
+src/node_modules
+src/public/storage
+src/storage/*.key
+src/.env
+src/.env.testing
+src/.phpunit.result.cache
+src/.config/psysh/
+
+# --- Docker ---
+docker/mysql/data/
+
+# --- OS / エディタ ---
+.DS_Store
+Thumbs.db
+.bash_history
+
+# IDE helper
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
