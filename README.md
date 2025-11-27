@@ -116,14 +116,15 @@ docker compose exec php php artisan db:seed
 |------------------------|----------------|
 | admin@example.com      | password123    |
 
-### ▼ 一般ユーザー（3名）
+### ▼ 一般ユーザー（5名）
 
-| メールアドレス        | パスワード     |
-|------------------------|----------------|
-| user1@example.com      | password123    |
-| user2@example.com      | password123    |
-| user3@example.com      | password123    |
-
+| 名前       | メールアドレス         | パスワード     |
+|------------|--------------------------|----------------|
+| 佐藤 花子  | user1@example.com        | password123    |
+| 鈴木 次郎  | user2@example.com        | password123    |
+| 高橋 美咲  | user3@example.com        | password123    |
+| 田中 大輝  | user4@example.com        | password123    |
+| 山本 莉子  | user5@example.com        | password123    |
 
 ## 6. 画面一覧
 
