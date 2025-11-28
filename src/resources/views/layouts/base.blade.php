@@ -14,14 +14,16 @@
 </head>
 
 <body>
-	{{-- 各レイアウトがここにヘッダーを挿し込む --}}
-	@yield('header')
-
+	@if ($headerType === 'admin')
+	@include('components.header-admin')
+	@elseif ($headerType === 'user')
+	@include('components.header-user')
+	@else
+	@include('components.header-guest')
+	@endif
 	<main class="main">
 		@yield('content')
 	</main>
-
-	@stack('js')
 </body>
 
 </html>
