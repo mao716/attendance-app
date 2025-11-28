@@ -12,6 +12,12 @@ class Attendance extends Model
 {
 	use HasFactory;
 
+	// ▼ ステータス定数
+	public const STATUS_OFF      = 0;
+	public const STATUS_WORKING  = 1;
+	public const STATUS_BREAK    = 2;
+	public const STATUS_FINISHED = 3;
+
 	protected $fillable = [
 		'user_id',
 		'work_date',
@@ -28,20 +34,46 @@ class Attendance extends Model
 		'clock_out_at'        => 'datetime',
 	];
 
+	// ▼ ステータスのラベル
+	public function getStatusLabelAttribute(): string
+	{
+		return match ($this->status) {
+			self::STATUS_WORKING  => '出勤中',
+			self::STATUS_BREAK    => '休憩中',
+			self::STATUS_FINISHED => '退勤済',
+			default               => '勤務外',
+		};
+	}
 
-	// ユーザーとのリレーション（多対1）
+	// ▼ 状態判定（Controller が読みやすくなる）
+	public function isWorking(): bool
+	{
+		return $this->status === self::STATUS_WORKING;
+	}
+	public function isOnBreak(): bool
+	{
+		return $this->status === self::STATUS_BREAK;
+	}
+	public function isFinished(): bool
+	{
+		return $this->status === self::STATUS_FINISHED;
+	}
+	public function isNotStarted(): bool
+	{
+		return $this->status === self::STATUS_OFF;
+	}
+
+	// ▼ リレーション
 	public function user()
 	{
 		return $this->belongsTo(User::class);
 	}
 
-	// 休憩とのリレーション（1対多）
 	public function breaks()
 	{
 		return $this->hasMany(AttendanceBreak::class);
 	}
 
-	// 修正申請とのリレーション（1対多）
 	public function correctionRequests()
 	{
 		return $this->hasMany(StampCorrectionRequest::class);
