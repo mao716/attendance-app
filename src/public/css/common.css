@@ -1,0 +1,133 @@
+/* =========================
+   全体のリセット
+   ========================= */
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	font-family: 'Noto Sans JP', sans-serif;
+	background: #f8f9fa;
+	color: #333;
+}
+
+/* =========================
+   レイアウト共通
+   ========================= */
+.main {
+	max-width: 1040px;
+	margin: 24px auto 40px;
+	padding: 0 24px;
+}
+
+/* =========================
+   ヘッダー
+   ========================= */
+
+.site-header {
+	width: 100%;
+	background-color: #000;
+	border-bottom: none;
+}
+
+.site-header-inner {
+	max-width: 1040px;
+	margin: 0 auto;
+	padding: 8px 24px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+}
+
+/* ロゴ */
+.site-logo {
+	font-size: 20px;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+}
+
+.site-logo img {
+	height: 30px;
+	display: block;
+}
+
+/* ナビゲーション（ログイン後） */
+.site-nav {
+	margin-left: auto;
+}
+
+.site-nav-list {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+
+.site-nav-item {
+	list-style: none;
+}
+
+/* a と button 両方に使う想定 */
+.site-nav-link {
+	display: inline-block;
+	color: #fff;
+	font-size: 16px;
+	padding: 0 8px;
+	line-height: 1;
+	text-decoration: none;
+	background: none;
+	border: none;
+	cursor: pointer;
+}
+
+/* ログアウト用フォーム（横並びにするための調整） */
+.site-nav-logout-form {
+	display: inline-block;
+}
+
+.site-nav-link--logout {
+	font: inherit;
+}
+
+/* （必要なら、ここに :hover 追加でOK）
+.site-nav-link:hover {
+	text-decoration: underline;
+}
+*/
+
+/* 右側（ユーザー名＋ログアウト）を使う場合用 */
+.site-header-right {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-left: 16px;
+}
+
+.site-user-name {
+	font-size: 14px;
+}
+
+/* =========================
+   スマホ幅
+   ========================= */
+@media (max-width: 767px) {
+	.site-header-inner {
+		padding: 8px 16px;
+		gap: 16px;
+	}
+
+	.site-nav-list {
+		gap: 8px;
+	}
+
+	.site-nav-link {
+		font-size: 13px;
+		padding: 0 6px;
+	}
+
+	.main {
+		padding: 0 16px;
+	}
+}
