@@ -25,6 +25,14 @@ class StampCorrectionRequest extends Model
 		'approved_at',
 	];
 
+	protected $casts = [
+		'before_clock_in_at'  => 'datetime',
+		'before_clock_out_at' => 'datetime',
+		'after_clock_in_at'   => 'datetime',
+		'after_clock_out_at'  => 'datetime',
+		'approved_at'         => 'datetime',
+	];
+
 	// 修正元の勤怠
 	public function attendance()
 	{

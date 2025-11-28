@@ -16,6 +16,11 @@ class AttendanceBreak extends Model
 		'break_end_at',
 	];
 
+	protected $casts = [
+		'break_start_at' => 'datetime',
+		'break_end_at'   => 'datetime',
+	];
+
 	// 勤怠（Attendance）とのリレーション（多対1）
 	public function attendance()
 	{

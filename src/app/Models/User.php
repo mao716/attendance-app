@@ -11,6 +11,25 @@ use App\Models\StampCorrectionRequest;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
+	use HasFactory, Notifiable;
+
+	protected $fillable = [
+		'name',
+		'email',
+		'password',
+		'role',
+	];
+
+	protected $hidden = [
+		'password',
+		'remember_token',
+	];
+
+	protected $casts = [
+		'email_verified_at' => 'datetime',
+		'password'          => 'hashed',
+	];
+
 	public function attendances()
 	{
 		return $this->hasMany(Attendance::class);

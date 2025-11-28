@@ -22,6 +22,13 @@ class Attendance extends Model
 		'status',
 	];
 
+	protected $casts = [
+		'work_date'           => 'date',
+		'clock_in_at'         => 'datetime',
+		'clock_out_at'        => 'datetime',
+	];
+
+
 	// ユーザーとのリレーション（多対1）
 	public function user()
 	{
