@@ -1,9 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\{
-	AuthRegisterController,
-	AuthLoginController,
 	AdminAuthLoginController,
 	AttendanceController,
 	AttendanceListController,
@@ -15,28 +14,19 @@ use App\Http\Controllers\{
 	AdminStampCorrectionRequestController,
 };
 
-// 必要ならトップはログイン or 打刻画面にリダイレクト
 Route::get('/', function () {
+	if (Auth::check()) {
+		// ログイン済みなら打刻画面へ
+		return redirect()->route('attendance.index');
+	}
+
+	// ゲストならログイン画面へ
 	return redirect()->route('login');
 });
 
 // ========================
 // 一般ユーザー側
 // ========================
-
-// 未ログイン時
-Route::middleware('guest')->group(function () {
-	// 会員登録
-	Route::get('/register', [AuthRegisterController::class, 'showRegisterForm'])->name('register');
-	Route::post('/register', [AuthRegisterController::class, 'register'])->name('register.perform');
-
-	// ログイン
-	Route::get('/login', [AuthLoginController::class, 'showLoginForm'])->name('login');
-	Route::post('/login', [AuthLoginController::class, 'authenticate'])->name('login.perform');
-});
-
-// ログアウト
-Route::post('/logout', [AuthLoginController::class, 'logout'])->name('logout');
 
 // ログイン必須（一般ユーザー）
 Route::middleware(['auth', 'verified'])->group(function () {

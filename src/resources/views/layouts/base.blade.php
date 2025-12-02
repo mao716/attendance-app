@@ -13,14 +13,13 @@
 	@stack('css')
 </head>
 
-<body>
-	@if ($headerType === 'admin')
-	@include('components.header-admin')
-	@elseif ($headerType === 'user')
-	@include('components.header-user')
+<body class="@yield('bodyClass')">
+	@hasSection('header')
+	@yield('header')
 	@else
 	@include('components.header-guest')
 	@endif
+
 	<main class="main">
 		@yield('content')
 	</main>
