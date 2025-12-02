@@ -9,11 +9,12 @@ class SetHeaderType
 {
 	public function handle(Request $request, Closure $next)
 	{
-		if (auth('admin')->check()) {
-			view()->share('headerType', 'admin');
-		}
+		// ★ いまは admin ガードが無いのでコメントアウト
+		// if (auth('admin')->check()) {
+		// view()->share('headerType', 'admin');
+		// }
 
-		elseif (auth()->check()) {
+		if (auth()->check()) {
 			view()->share('headerType', 'user');
 		}
 
