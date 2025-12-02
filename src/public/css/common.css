@@ -9,8 +9,11 @@
 
 body {
 	font-family: 'Noto Sans JP', sans-serif;
-	background: #f8f9fa;
 	color: #333;
+}
+
+.bg-after-login {
+	background: #f2f2f2;
 }
 
 /* =========================

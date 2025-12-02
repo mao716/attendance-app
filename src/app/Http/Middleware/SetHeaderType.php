@@ -4,21 +4,19 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class SetHeaderType
 {
 	public function handle(Request $request, Closure $next)
 	{
-		// ★ いまは admin ガードが無いのでコメントアウト
-		// if (auth('admin')->check()) {
-		// view()->share('headerType', 'admin');
-		// }
-
 		if (auth()->check()) {
-			view()->share('headerType', 'user');
-		}
-
-		else {
+			if (Gate::allows('is-admin')) {
+				view()->share('headerType', 'admin');
+			} else {
+				view()->share('headerType', 'user');
+			}
+		} else {
 			view()->share('headerType', 'guest');
 		}
 
