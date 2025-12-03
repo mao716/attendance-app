@@ -27,11 +27,30 @@ class AttendanceController extends Controller
 			->where('work_date', $today->toDateString())
 			->first();
 
+		// ステータス関連
+		$status = $attendance?->status ?? Attendance::STATUS_OFF;
+		$statusLabel = $attendance?->status_label ?? '勤務外';
+
+		// 日付・時刻の表示用
+		$todayLabel = $this->formatJapaneseDate($today); // 2023年6月1日(木) みたいな書式
+		$timeLabel  = $now->format('H:i');               // 08:00
+
 		return view('attendance.index', [
-			'now'            => $now,
-			'today'          => $today,
-			'attendance'     => $attendance,
+			'todayLabel'   => $todayLabel,
+			'timeLabel'    => $timeLabel,
+			'status'       => $status,
+			'statusLabel'  => $statusLabel,
+			'attendance'   => $attendance,
 		]);
+	}
+
+	// 追記：日付フォーマット用メソッド
+	private function formatJapaneseDate(Carbon $date): string
+	{
+		$weekdays = ['月', '火', '水', '木', '金', '土', '日'];
+		$weekday = $weekdays[$date->dayOfWeekIso - 1];
+
+		return $date->format("Y年n月j日") . "({$weekday})";
 	}
 
 
@@ -66,8 +85,9 @@ class AttendanceController extends Controller
 		$attendance->status = Attendance::STATUS_WORKING;
 		$attendance->save();
 
-		return redirect()->route('attendance.index')->with('success', '出勤を記録しました。');
+		return redirect()->route('attendance.index');
 	}
+
 
 
 	/**
@@ -96,7 +116,7 @@ class AttendanceController extends Controller
 		$attendance->status = Attendance::STATUS_BREAK;
 		$attendance->save();
 
-		return redirect()->route('attendance.index')->with('success', '休憩開始を記録しました。');
+		return redirect()->route('attendance.index');
 	}
 
 
@@ -121,8 +141,9 @@ class AttendanceController extends Controller
 
 		// 未終了の休憩を取得
 		$break = $attendance->breaks
+			->whereNull('break_end_at')
 			->sortByDesc('break_start_at')
-			->first(fn($b) => $b->break_end_at === null);
+			->first();
 
 		if (! $break) {
 			// 想定外：とりあえず勤務中に戻す
@@ -148,7 +169,7 @@ class AttendanceController extends Controller
 		$attendance->status = Attendance::STATUS_WORKING;
 		$attendance->save();
 
-		return redirect()->route('attendance.index')->with('success', '休憩終了を記録しました。');
+		return redirect()->route('attendance.index');
 	}
 
 
@@ -193,6 +214,6 @@ class AttendanceController extends Controller
 
 		$attendance->save();
 
-		return redirect()->route('attendance.index')->with('success', '退勤を記録しました。お疲れさまでした！');
+		return redirect()->route('attendance.index');
 	}
 }
