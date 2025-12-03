@@ -1,0 +1,101 @@
+.attendance-list-page {
+	padding-top: 32px;
+}
+
+/* タイトル */
+.page-title {
+	font-size: 20px;
+	font-weight: 700;
+	margin-bottom: 24px;
+}
+
+/* 月ナビゲーション */
+.attendance-list-month-nav {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 24px;
+	background: #fff;
+	border-radius: 8px;
+	padding: 12px 16px;
+}
+
+.month-nav-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 14px;
+	color: #333;
+	text-decoration: none;
+	padding: 6px 10px;
+	border-radius: 999px;
+	background: #f5f5f5;
+}
+
+.month-nav-button:hover {
+	background: #e5e5e5;
+}
+
+.month-nav-current {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+}
+
+.month-nav-icon {
+	font-size: 16px;
+}
+
+/* テーブル */
+.attendance-list-table-wrap {
+	background: #fff;
+	border-radius: 8px;
+	padding: 16px;
+	overflow-x: auto;
+}
+
+.attendance-list-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 14px;
+}
+
+.attendance-list-table th,
+.attendance-list-table td {
+	padding: 8px 12px;
+	text-align: center;
+	border-bottom: 1px solid #e5e5e5;
+}
+
+.attendance-list-table thead th {
+	background: #f5f5f5;
+	font-weight: 700;
+}
+
+.col-date {
+	text-align: left;
+	white-space: nowrap;
+}
+
+.detail-link {
+	font-size: 13px;
+	color: #007aff;
+	text-decoration: none;
+}
+
+.detail-link:hover {
+	text-decoration: underline;
+}
+
+@media (max-width: 767px) {
+	.page-title {
+		font-size: 18px;
+	}
+
+	.attendance-list-month-nav {
+		flex-direction: column;
+		gap: 8px;
+		align-items: stretch;
+	}
+}
