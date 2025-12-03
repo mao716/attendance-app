@@ -24,7 +24,7 @@
 		<div class="attendance-button-area">
 
 			@if ($status === \App\Models\Attendance::STATUS_OFF)
-			<form method="POST" action="{{ route('attendance.clock-in') }}" class="attendance-form">
+			<form method="POST" action="{{ route('attendance.clock_in') }}" class="attendance-form">
 				@csrf
 				<button type="submit" class="attendance-button">
 					出勤
@@ -32,14 +32,14 @@
 			</form>
 
 			@elseif ($status === \App\Models\Attendance::STATUS_WORKING)
-			<form method="POST" action="{{ route('attendance.clock-out') }}" class="attendance-form">
+			<form method="POST" action="{{ route('attendance.clock_out') }}" class="attendance-form">
 				@csrf
 				<button type="submit" class="attendance-button">
 					退勤
 				</button>
 			</form>
 
-			<form method="POST" action="{{ route('attendance.break-in') }}" class="attendance-form">
+			<form method="POST" action="{{ route('attendance.break_in') }}" class="attendance-form">
 				@csrf
 				<button type="submit" class="attendance-button attendance-button-secondary">
 					休憩入
@@ -47,7 +47,7 @@
 			</form>
 
 			@elseif ($status === \App\Models\Attendance::STATUS_BREAK)
-			<form method="POST" action="{{ route('attendance.break-out') }}" class="attendance-form">
+			<form method="POST" action="{{ route('attendance.break_out') }}" class="attendance-form">
 				@csrf
 				<button type="submit" class="attendance-button attendance-button-secondary">
 					休憩戻
@@ -66,4 +66,4 @@
 
 	</section>
 </div>
-	@endsection
+@endsection
