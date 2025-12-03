@@ -1,69 +1,69 @@
-@extends('layouts.base')
+@extends('layouts.user')
+
+@section('title', '勤怠登録')
 
 @push('css')
 <link rel="stylesheet" href="{{ asset('css/attendance.css') }}">
 @endpush
 
-@section('title', '勤怠打刻')
-
 @section('content')
-<main class="attendance-page">
+<div class="attendance-wrapper">
+	<section class="attendance-panel" aria-labelledby="attendance-heading">
+		<p class="attendance-status-badge">
+			{{ $statusLabel }}
+		</p>
 
-	{{-- 現在日時 --}}
-	<section class="time-block">
-		<p class="current-date">{{ $today->format('Y年m月d日 (D)') }}</p>
-		<p class="current-time">{{ $now->format('H:i:s') }}</p>
+		<h1 id="attendance-heading" class="attendance-date">
+			{{ $todayLabel }}
+		</h1>
+
+		<p class="attendance-time">
+			{{ $timeLabel }}
+		</p>
+
+		<div class="attendance-button-area">
+
+			@if ($status === \App\Models\Attendance::STATUS_OFF)
+			<form method="POST" action="{{ route('attendance.clock-in') }}" class="attendance-form">
+				@csrf
+				<button type="submit" class="attendance-button">
+					出勤
+				</button>
+			</form>
+
+			@elseif ($status === \App\Models\Attendance::STATUS_WORKING)
+			<form method="POST" action="{{ route('attendance.clock-out') }}" class="attendance-form">
+				@csrf
+				<button type="submit" class="attendance-button">
+					退勤
+				</button>
+			</form>
+
+			<form method="POST" action="{{ route('attendance.break-in') }}" class="attendance-form">
+				@csrf
+				<button type="submit" class="attendance-button attendance-button-secondary">
+					休憩入
+				</button>
+			</form>
+
+			@elseif ($status === \App\Models\Attendance::STATUS_BREAK)
+			<form method="POST" action="{{ route('attendance.break-out') }}" class="attendance-form">
+				@csrf
+				<button type="submit" class="attendance-button attendance-button-secondary">
+					休憩戻
+				</button>
+			</form>
+
+			@elseif ($status === \App\Models\Attendance::STATUS_FINISHED)
+			{{-- ここはボタンなし。下の「お疲れ様でした。」だけ表示 --}}
+			@endif
+
+		</div>
+
+		@if ($status === \App\Models\Attendance::STATUS_FINISHED)
+		<p class="attendance-message">お疲れ様でした。</p>
+		@endif
+
 	</section>
-
-	{{-- 状態表示 --}}
-	<section class="status-block">
-		@if ($attendance)
-		<p class="status-label">現在の状態：<strong>{{ $attendance->status_label }}</strong></p>
-		@else
-		<p class="status-label">現在の状態：<strong>勤務外</strong></p>
-		@endif
-	</section>
-
-	{{-- ボタン --}}
-	<section class="button-block">
-
-		{{-- 出勤 --}}
-		@if (! $attendance || $attendance->isNotStarted())
-		<form action="{{ route('attendance.clockIn') }}" method="POST">
-			@csrf
-			<button class="btn btn-primary">出勤</button>
-		</form>
-		@endif
-
-		{{-- 休憩開始 --}}
-		@if ($attendance && $attendance->isWorking())
-		<form action="{{ route('attendance.breakIn') }}" method="POST">
-			@csrf
-			<button class="btn btn-secondary">休憩開始</button>
-		</form>
-		@endif
-
-		{{-- 休憩終了 --}}
-		@if ($attendance && $attendance->isOnBreak())
-		<form action="{{ route('attendance.breakOut') }}" method="POST">
-			@csrf
-			<button class="btn btn-secondary">休憩終了</button>
-		</form>
-		@endif
-
-		{{-- 退勤 --}}
-		@if ($attendance && $attendance->isWorking())
-		<form action="{{ route('attendance.clockOut') }}" method="POST">
-			@csrf
-			<button class="btn btn-danger">退勤</button>
-		</form>
-		@endif
-	</section>
-
-	{{-- フラッシュメッセージ --}}
-	@if (session('success'))
-	<p class="flash-message">{{ session('success') }}</p>
-	@endif
-
-</main>
-@endsection
+</div>
+	@endsection

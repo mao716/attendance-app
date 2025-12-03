@@ -49,13 +49,14 @@ Route::middleware(['auth'])->group(function () {
 
 	// 打刻アクション
 	Route::post('/attendance/clock-in', [UserAttendanceController::class, 'clockIn'])
-		->name('attendance.clock_in');
+		->name('attendance.clock-in');
 	Route::post('/attendance/break-in', [UserAttendanceController::class, 'breakIn'])
-		->name('attendance.break_in');
+		->name('attendance.break-in');
 	Route::post('/attendance/break-out', [UserAttendanceController::class, 'breakOut'])
-		->name('attendance.break_out');
+		->name('attendance.break-out');
 	Route::post('/attendance/clock-out', [UserAttendanceController::class, 'clockOut'])
-		->name('attendance.clock_out');
+		->name('attendance.clock-out');
+
 
 	// PG04 勤怠一覧 /attendance/list
 	Route::get('/attendance/list', [AttendanceListController::class, 'index'])
