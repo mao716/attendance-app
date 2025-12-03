@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\{
+	Auth\AuthRegisterController,
 	AdminAuthLoginController,
 	AttendanceController,
 	AttendanceListController,
@@ -24,12 +25,16 @@ Route::get('/', function () {
 	return redirect()->route('login');
 });
 
+// 会員登録（ゲスト）
+Route::post('/register', [AuthRegisterController::class, 'store'])
+	->name('register');
+
 // ========================
 // 一般ユーザー側
 // ========================
 
 // ログイン必須（一般ユーザー）
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
 	// PG03 出勤登録画面（打刻） /attendance
 	Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
 
