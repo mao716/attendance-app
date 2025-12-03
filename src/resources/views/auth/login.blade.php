@@ -11,13 +11,10 @@
 
 	<h1>ログイン</h1>
 
-	@if ($errors->any())
+	{{-- 認証失敗 --}}
+	@if ($errors->has('login_error'))
 	<div class="auth-error">
-		<ul>
-			@foreach ($errors->all() as $error)
-			<li>{{ $error }}</li>
-			@endforeach
-		</ul>
+		{{ $errors->first('login_error') }}
 	</div>
 	@endif
 
@@ -26,12 +23,18 @@
 
 		<div class="auth-field">
 			<label for="email">メールアドレス</label>
-			<input id="email" type="email" name="email">
+			<input id="email" type="email" name="email" value="{{ old('email') }}">
+			@error('email')
+			<p class="error-text">{{ $message }}</p>
+			@enderror
 		</div>
 
 		<div class="auth-field">
 			<label for="password">パスワード</label>
 			<input id="password" type="password" name="password">
+			@error('password')
+			<p class="error-text">{{ $message }}</p>
+			@enderror
 		</div>
 
 		<button class="btn btn-primary" type="submit">ログインする</button>

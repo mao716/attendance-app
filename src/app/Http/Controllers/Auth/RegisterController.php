@@ -7,7 +7,7 @@ use App\Http\Requests\RegisterRequest;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Illuminate\Http\RedirectResponse;
 
-class AuthRegisterController extends Controller
+class RegisterController extends Controller
 {
 	public function showRegisterForm()
 	{
