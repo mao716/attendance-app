@@ -1,20 +1,22 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\{
-	Auth\AuthRegisterController,
-	AdminAuthLoginController,
-	AttendanceController,
-	AttendanceListController,
-	AttendanceDetailController,
-	StampCorrectionRequestController,
-	AdminAttendanceController,
-	AdminStaffController,
-	AdminStaffAttendanceController,
-	AdminStampCorrectionRequestController,
-};
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\LoginController as UserLoginController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\User\AttendanceController as UserAttendanceController;
+use App\Http\Controllers\User\AttendanceListController;
+use App\Http\Controllers\User\AttendanceDetailController;
+use App\Http\Controllers\User\StampCorrectionRequestController as UserStampCorrectionRequestController;
+use App\Http\Controllers\Admin\LoginController as AdminLoginController;
+use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
+use App\Http\Controllers\Admin\StaffController;
+use App\Http\Controllers\Admin\StaffAttendanceController;
+use App\Http\Controllers\Admin\StampCorrectionRequestController as AdminStampCorrectionRequestController;
 
+// ----------------------------------------
+// ルート：ログイン状態によるトップ画面振り分け
+// ----------------------------------------
 Route::get('/', function () {
 	if (Auth::check()) {
 		// ログイン済みなら打刻画面へ
@@ -25,84 +27,104 @@ Route::get('/', function () {
 	return redirect()->route('login');
 });
 
-// 会員登録（ゲスト）
-Route::post('/register', [AuthRegisterController::class, 'store'])
+// ----------------------------------------
+// 一般ユーザー認証（Fortify + 独自Controller）
+// ----------------------------------------
+
+// ログイン（POST） ※ GET /login は Fortify::loginView が担当
+Route::post('/login', [UserLoginController::class, 'login'])
+	->name('login');
+
+// 会員登録（POST） ※ GET /register は Fortify::registerView が担当
+Route::post('/register', [RegisterController::class, 'store'])
 	->name('register');
 
-// ========================
-// 一般ユーザー側
-// ========================
-
-// ログイン必須（一般ユーザー）
+// ----------------------------------------
+// 一般ユーザー側（要ログイン）
+// ----------------------------------------
 Route::middleware(['auth'])->group(function () {
 	// PG03 出勤登録画面（打刻） /attendance
-	Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+	Route::get('/attendance', [UserAttendanceController::class, 'index'])
+		->name('attendance.index');
 
 	// 打刻アクション
-	Route::post('/attendance/clock-in', [AttendanceController::class, 'clockIn'])->name('attendance.clock_in');
-	Route::post('/attendance/break-in', [AttendanceController::class, 'breakIn'])->name('attendance.break_in');
-	Route::post('/attendance/break-out', [AttendanceController::class, 'breakOut'])->name('attendance.break_out');
-	Route::post('/attendance/clock-out', [AttendanceController::class, 'clockOut'])->name('attendance.clock_out');
+	Route::post('/attendance/clock-in', [UserAttendanceController::class, 'clockIn'])
+		->name('attendance.clock_in');
+	Route::post('/attendance/break-in', [UserAttendanceController::class, 'breakIn'])
+		->name('attendance.break_in');
+	Route::post('/attendance/break-out', [UserAttendanceController::class, 'breakOut'])
+		->name('attendance.break_out');
+	Route::post('/attendance/clock-out', [UserAttendanceController::class, 'clockOut'])
+		->name('attendance.clock_out');
 
 	// PG04 勤怠一覧 /attendance/list
-	Route::get('/attendance/list', [AttendanceListController::class, 'index'])->name('attendance.list');
+	Route::get('/attendance/list', [AttendanceListController::class, 'index'])
+		->name('attendance.list');
 
 	// PG05 勤怠詳細 /attendance/detail/{id}
-	Route::get('/attendance/detail/{attendance}', [AttendanceDetailController::class, 'show'])->name('attendance.detail');
+	Route::get('/attendance/detail/{attendance}', [AttendanceDetailController::class, 'show'])
+		->name('attendance.detail');
 
 	// 勤怠修正申請（一般ユーザー側から申請）
 	Route::post(
 		'/attendance/detail/{attendance}/request',
-		[StampCorrectionRequestController::class, 'store']
+		[UserStampCorrectionRequestController::class, 'store']
 	)->name('stamp_correction_request.store');
 
 	// PG06 申請一覧（一般ユーザー） /stamp_correction_request/list
 	Route::get(
 		'/stamp_correction_request/list',
-		[StampCorrectionRequestController::class, 'indexForUser']
+		[UserStampCorrectionRequestController::class, 'indexForUser']
 	)->name('stamp_correction_request.user_index');
 });
 
-// ========================
+// ----------------------------------------
 // 管理者側
-// ========================
-
+// ----------------------------------------
 Route::prefix('admin')->name('admin.')->group(function () {
 	// 管理者ログイン前
 	Route::middleware('guest')->group(function () {
 		// PG07 管理者ログイン /admin/login
-		Route::get('/login', [AdminAuthLoginController::class, 'showLoginForm'])->name('login');
-		Route::post('/login', [AdminAuthLoginController::class, 'authenticate'])->name('login.perform');
+		Route::get('/login', [AdminLoginController::class, 'showLoginForm'])
+			->name('login');
+		Route::post('/login', [AdminLoginController::class, 'authenticate'])
+			->name('login.perform');
 	});
 
-	// 管理者ログイン後（role=2 だけ通す想定のミドルウェア）
+	// 管理者ログイン後（role = 2 のみ）
 	Route::middleware(['auth', 'can:is-admin'])->group(function () {
-		Route::post('/logout', [AdminAuthLoginController::class, 'logout'])->name('logout');
+		Route::post('/logout', [AdminLoginController::class, 'logout'])
+			->name('logout');
 
 		// PG08 日次勤怠一覧 /admin/attendance/list
-		Route::get('/attendance/list', [AdminAttendanceController::class, 'index'])->name('attendance.list');
+		Route::get('/attendance/list', [AdminAttendanceController::class, 'index'])
+			->name('attendance.list');
 
 		// PG09 日次勤怠詳細 /admin/attendance/{id}
-		Route::get('/attendance/{attendance}', [AdminAttendanceController::class, 'show'])->name('attendance.detail');
-		// 管理者による直接修正（基本設計の AdminAttendanceUpdateRequest 用）:contentReference[oaicite:1]{index=1}
-		Route::put('/attendance/{attendance}', [AdminAttendanceController::class, 'update'])->name('attendance.update');
+		Route::get('/attendance/{attendance}', [AdminAttendanceController::class, 'show'])
+			->name('attendance.detail');
+
+		// 管理者による直接修正 /admin/attendance/{id}
+		Route::put('/attendance/{attendance}', [AdminAttendanceController::class, 'update'])
+			->name('attendance.update');
 
 		// PG10 スタッフ一覧 /admin/staff/list
-		Route::get('/staff/list', [AdminStaffController::class, 'index'])->name('staff.list');
+		Route::get('/staff/list', [StaffController::class, 'index'])
+			->name('staff.list');
 
 		// PG11 スタッフ別月次勤怠 /admin/attendance/staff/{id}
 		Route::get(
 			'/attendance/staff/{user}',
-			[AdminStaffAttendanceController::class, 'index']
+			[StaffAttendanceController::class, 'index']
 		)->name('attendance.staff');
 
-		// PG12 修正申請一覧（管理者） /stamp_correction_request/list
+		// PG12 修正申請一覧（管理者） /admin/stamp_correction_request/list
 		Route::get(
 			'/stamp_correction_request/list',
 			[AdminStampCorrectionRequestController::class, 'index']
 		)->name('stamp_correction_request.index');
 
-		// PG13 修正申請承認画面 /stamp_correction_request/approve/{id}
+		// PG13 修正申請承認画面 /admin/stamp_correction_request/approve/{id}
 		Route::get(
 			'/stamp_correction_request/approve/{request}',
 			[AdminStampCorrectionRequestController::class, 'show']
