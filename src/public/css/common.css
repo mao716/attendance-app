@@ -1,6 +1,3 @@
-/* =========================
-   全体のリセット
-   ========================= */
 * {
 	margin: 0;
 	padding: 0;
@@ -16,18 +13,11 @@ body {
 	background: #f2f2f2;
 }
 
-/* =========================
-   レイアウト共通
-   ========================= */
 .main {
 	max-width: 1040px;
 	margin: 24px auto 40px;
 	padding: 0 24px;
 }
-
-/* =========================
-   ヘッダー
-   ========================= */
 
 .site-header {
 	width: 100%;
@@ -45,7 +35,6 @@ body {
 	gap: 24px;
 }
 
-/* ロゴ */
 .site-logo {
 	font-size: 20px;
 	font-weight: 700;
@@ -53,11 +42,12 @@ body {
 }
 
 .site-logo img {
-	height: 30px;
 	display: block;
+	height: auto;
+	width: auto;
+	max-height: 30px;
 }
 
-/* ナビゲーション（ログイン後） */
 .site-nav {
 	margin-left: auto;
 }
@@ -72,7 +62,6 @@ body {
 	list-style: none;
 }
 
-/* a と button 両方に使う想定 */
 .site-nav-link {
 	display: inline-block;
 	color: #fff;
@@ -85,7 +74,6 @@ body {
 	cursor: pointer;
 }
 
-/* ログアウト用フォーム（横並びにするための調整） */
 .site-nav-logout-form {
 	display: inline-block;
 }
@@ -94,13 +82,6 @@ body {
 	font: inherit;
 }
 
-/* （必要なら、ここに :hover 追加でOK）
-.site-nav-link:hover {
-	text-decoration: underline;
-}
-*/
-
-/* 右側（ユーザー名＋ログアウト）を使う場合用 */
 .site-header-right {
 	display: flex;
 	align-items: center;
@@ -112,9 +93,6 @@ body {
 	font-size: 14px;
 }
 
-/* =========================
-   スマホ幅
-   ========================= */
 @media (max-width: 767px) {
 	.site-header-inner {
 		padding: 8px 16px;
@@ -132,5 +110,9 @@ body {
 
 	.main {
 		padding: 0 16px;
+	}
+
+	.site-logo img {
+		max-height: 24px;
 	}
 }
