@@ -24,7 +24,6 @@
 
 .attendance-date {
 	font-size: 24px;
-	color: #000;
 	font-weight: 600;
 	margin-bottom: 12px;
 	letter-spacing: 0.05em;
@@ -32,7 +31,6 @@
 
 .attendance-time {
 	font-size: 64px;
-	color: #000;
 	font-weight: 700;
 	letter-spacing: 0.08em;
 	margin-bottom: 48px;
@@ -75,7 +73,6 @@
 
 .attendance-message {
 	font-size: 20px;
-	color: #000;
 	font-weight: 600;
 	margin-top: 30px;
 	letter-spacing: 0.12em;

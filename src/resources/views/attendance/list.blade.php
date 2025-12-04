@@ -7,24 +7,26 @@
 @endpush
 
 @section('content')
-<main class="main attendance-list-page">
+<div class="attendance-list-page">
 	<h1 class="page-title">勤怠一覧</h1>
 
 	{{-- 月ナビ --}}
 	<div class="attendance-list-month-nav">
-		<a href="{{ route('attendance.list', ['month' => $prevMonthParam]) }}" class="month-nav-button is-prev">
-			<span class="month-nav-arrow">&larr;</span>
+		<a href="{{ route('attendance.list', ['month' => $prevMonthParam]) }}" class=" month-nav-button is-prev">
+			<img src="{{ asset('images/icon_arrow_left.svg') }}" alt="" class="month-nav-arrow-icon">
 			<span class="month-nav-label">前月</span>
 		</a>
 
 		<div class="month-nav-current">
-			<span class="month-nav-icon" aria-hidden="true">📅</span>
+			<img src="{{ asset('images/icon_calendar.svg') }}"
+				alt=""
+				class="month-nav-icon">
 			<span class="month-nav-text">{{ $targetMonth->format('Y/m') }}</span>
 		</div>
 
-		<a href="{{ route('attendance.list', ['month' => $nextMonthParam]) }}" class="month-nav-button is-next">
+		<a href="{{ route('attendance.list', ['month' => $nextMonthParam]) }}" class=" month-nav-button is-next">
 			<span class="month-nav-label">翌月</span>
-			<span class="month-nav-arrow">&rarr;</span>
+			<img src="{{ asset('images/icon_arrow_right.svg') }}" alt="" class="month-nav-arrow-icon">
 		</a>
 	</div>
 
@@ -72,5 +74,5 @@
 			</tbody>
 		</table>
 	</div>
-</main>
+</div>
 @endsection
