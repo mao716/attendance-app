@@ -3,25 +3,7 @@
 	padding-bottom: 60px;
 }
 
-.page-title {
-	font-size: 32px;
-	font-weight: 800;
-	display: flex;
-	align-items: center;
-	gap: 20px;
-	margin-bottom: 32px;
-}
-
-.page-title::before {
-	content: "";
-	display: block;
-	width: 8px;
-	height: 1.2em;
-	margin-top: 2px;
-	background: #000;
-	border-radius: 2px;
-}
-
+/* 月ナビゲーション */
 .attendance-list-month-nav {
 	display: flex;
 	align-items: center;
@@ -41,7 +23,6 @@
 	text-decoration: none;
 	padding: 6px 10px;
 	border-radius: 999px;
-
 }
 
 .month-nav-button:hover {
@@ -68,43 +49,6 @@
 	flex-shrink: 0;
 }
 
-.attendance-list-table-wrap {
-	background: #fff;
-	border-radius: 8px;
-	padding: 6px 0px 0px;
-	overflow-x: auto;
-}
-
-.attendance-list-table {
-	width: 100%;
-	border-collapse: collapse;
-	font-size: 14px;
-	table-layout: fixed;
-}
-
-.attendance-list-table th,
-.attendance-list-table td {
-	padding: 8px 12px;
-	text-align: center;
-	border-bottom: 2px solid #d8d8d8;
-}
-
-.attendance-list-table thead th {
-	color: #616161;
-	font-size: 15px;
-	font-weight: 700;
-	border-bottom: 3px solid #d8d8d8;
-	letter-spacing: 0.1em;
-}
-
-.attendance-list-table tbody tr:last-child td {
-	border-bottom: none;
-}
-
-.month-nav-arrow {
-	font-size: 12px;
-}
-
 .month-nav-label {
 	color: #616161;
 	font-size: 16px;
@@ -118,32 +62,8 @@
 	letter-spacing: 0.07em;
 }
 
-.col-time,
-.col-detail,
-.col-date {
-	text-align: center;
-	white-space: nowrap;
-	color: #616161;
-	font-size: 15px;
-	font-weight: 700;
-	letter-spacing: 0.1em;
-}
-
-.detail-link {
-	font-size: 15px;
-	color: #000;
-	text-decoration: none;
-}
-
-.detail-link:hover {
-	text-decoration: underline;
-}
-
+/* レスポンシブ（PG04専用） */
 @media (max-width: 767px) {
-	.page-title {
-		font-size: 18px;
-	}
-
 	.attendance-list-month-nav {
 		flex-direction: column;
 		gap: 8px;

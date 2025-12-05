@@ -89,6 +89,73 @@ body {
 	margin-left: 16px;
 }
 
+/* =========================
+   共通：テーブルコンポーネント
+   ========================= */
+
+/* ラッパー（スクロール用） */
+.table-wrap {
+	background: #fff;
+	border-radius: 8px;
+	padding: 6px 0 0;
+	overflow-x: auto;
+}
+
+/* テーブル本体 */
+.table {
+	width: 100%;
+	border-collapse: collapse;
+	color: #616161;
+	font-size: 14px;
+	font-weight: 700;
+	table-layout: fixed;
+}
+
+/* セル */
+.table th,
+.table td {
+	padding: 8px 12px;
+	text-align: center;
+	border-bottom: 2px solid #d8d8d8;
+}
+
+/* 見出し行 */
+.table thead th {
+	color: #616161;
+	font-size: 15px;
+	font-weight: 700;
+	border-bottom: 3px solid #d8d8d8;
+	letter-spacing: 0.1em;
+}
+
+/* 最終行は線を消す */
+.table tbody tr:last-child td {
+	border-bottom: none;
+}
+
+/* カラム（用途別・任意） */
+.table-col-time,
+.table-col-date,
+.table-col-detail {
+	text-align: center;
+	white-space: nowrap;
+	color: #616161;
+	font-size: 15px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+}
+
+/* 詳細リンク（共通化） */
+.table-detail-link {
+	font-size: 15px;
+	color: #000;
+	text-decoration: none;
+}
+
+.table-detail-link:hover {
+	text-decoration: underline;
+}
+
 .site-user-name {
 	font-size: 14px;
 }

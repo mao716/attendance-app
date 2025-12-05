@@ -42,8 +42,8 @@
 	};
 	@endphp
 
-	<div class="attendance-list-table-wrap">
-		<table class="attendance-list-table">
+	<div class="table-wrap">
+		<table class="table">
 			<thead>
 				<tr>
 					<th>日付</th>
@@ -64,7 +64,7 @@
 					<td class="col-time">{{ $formatMinutes($row['work_minutes']) }}</td>
 					<td class="col-detail">
 						@if (!empty($row['attendance_id']))
-						<a href="#" class="detail-link">詳細</a>
+						<a href="#" class="table-detail-link">詳細</a>
 						{{-- PG05 実装したら route に差し替え --}}
 						{{-- route('attendance.detail', ['id' => $row['attendance_id']]) --}}
 						@endif

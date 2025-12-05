@@ -10,7 +10,6 @@ class AttendanceFactory extends Factory
 {
 	public function definition(): array
 	{
-		// ユーザーをランダムに取得（存在しなければ作成）
 		$userId = User::inRandomOrder()->first()?->id
 			?? User::factory()->create()->id;
 
@@ -19,7 +18,7 @@ class AttendanceFactory extends Factory
 			->dateTimeBetween('-30 days', 'now')
 			->format('Y-m-d');
 
-		// 出勤時間（09:00〜11:00）→ Carbon に変換
+		// 出勤時間（09:00〜11:00）
 		$clockIn = Carbon::parse(
 			$this->faker->dateTimeBetween(
 				"{$workDate} 09:00:00",
@@ -27,22 +26,27 @@ class AttendanceFactory extends Factory
 			)
 		);
 
-		// 退勤時間（17:00〜20:00）→ Carbon に変換
+		// ★退勤時間（17:00〜20:00）に修正  ← ここがポイント
 		$clockOut = Carbon::parse(
 			$this->faker->dateTimeBetween(
-				$clockIn->copy()->format('Y-m-d H:i:s'),
+				"{$workDate} 17:00:00",
 				"{$workDate} 20:00:00"
 			)
 		);
 
-		// 休憩時間（30〜90分）
+		// 勤務時間（分）
+		$workMinutes = $clockIn->diffInMinutes($clockOut);
+
+		// 休憩時間（30〜90分）※勤務時間より長くならないように保険を入れる
 		$breakMinutes = $this->faker->numberBetween(30, 90);
+		if ($breakMinutes >= $workMinutes) {
+			$breakMinutes = max(0, $workMinutes - 1);
+		}
 
-		// 実働時間（出勤〜退勤−休憩）
-		$workingMinutes = $clockIn->diffInMinutes($clockOut) - $breakMinutes;
+		// 実働時間
+		$workingMinutes = $workMinutes - $breakMinutes;
 
-		// ステータス（退勤済＝4）
-		$status = 4;
+		$status = 4; // 退勤済
 
 		return [
 			'user_id'             => $userId,
