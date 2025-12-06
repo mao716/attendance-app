@@ -11,6 +11,9 @@ class StampCorrectionRequest extends Model
 {
 	use HasFactory;
 
+	public const STATUS_PENDING  = 0; // 承認待ち
+	public const STATUS_APPROVED = 1; // 承認済み
+
 	protected $fillable = [
 		'attendance_id',
 		'user_id',
@@ -31,6 +34,9 @@ class StampCorrectionRequest extends Model
 		'after_clock_in_at'   => 'datetime',
 		'after_clock_out_at'  => 'datetime',
 		'approved_at'         => 'datetime',
+		'status'              => 'integer',
+		'before_break_minutes' => 'integer',
+		'after_break_minutes' => 'integer',
 	];
 
 	// 修正元の勤怠
@@ -43,5 +49,15 @@ class StampCorrectionRequest extends Model
 	public function user()
 	{
 		return $this->belongsTo(User::class);
+	}
+
+	public function isPending(): bool
+	{
+		return $this->status === self::STATUS_PENDING;
+	}
+
+	public function isApproved(): bool
+	{
+		return $this->status === self::STATUS_APPROVED;
 	}
 }
