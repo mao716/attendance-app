@@ -3,6 +3,12 @@
 	padding-bottom: 60px;
 }
 
+.attendance-list {
+	max-width: 840px;
+	margin: 0 auto;
+	padding: 0 40px;
+}
+
 /* 月ナビゲーション */
 .attendance-list-month-nav {
 	display: flex;

@@ -4,22 +4,30 @@
 }
 
 .attendance-detail {
-	max-width: 720px;
+	max-width: 840px;
 	margin: 0 auto;
+	padding: 0 40px;
 }
 
-/* 白いカード */
+.attendance-detail {
+	--label-col-width: 220px;
+	--time-col-width: 140px;
+	--tilde-col-width: 40px;
+}
+
+/* ---- 白いカード ---- */
 .attendance-detail-card {
 	margin-top: 32px;
 	background: #fff;
 	border-radius: 8px;
 	overflow: hidden;
-	padding-bottom: 24px;
 }
 
-/* 1行（ラベル + 値） */
+/* 1行：Gridレイアウト（ラベル / 左 / 〜 / 右） */
 .attendance-detail-row {
-	display: flex;
+	display: grid;
+	grid-template-columns:
+		var(--label-col-width) var(--time-col-width) var(--tilde-col-width) var(--time-col-width);
 	align-items: center;
 	border-bottom: 1px solid #e5e5e5;
 	min-height: 64px;
@@ -31,57 +39,72 @@
 	border-bottom: none;
 }
 
-/* 左ラベル */
-.attendance-detail-label {
-	width: 35%;
+/* 共通セル */
+.cell {
+	font-weight: 700;
+	letter-spacing: 0.1em;
+}
+
+/* ラベル列（1列目） */
+.cell-label {
+	grid-column: 1;
 	color: #616161;
-	font-weight: 700;
 	padding-left: 16px;
-	letter-spacing: 0.1em;
 }
 
-/* 右側（値） */
-.attendance-detail-value {
-	width: 65%;
-	font-weight: 700;
-	padding-left: 16px;
-	letter-spacing: 0.1em;
-}
-
-/* 日付（年と日付を左右に分ける） */
-.attendance-detail-date {
+/* 左側の値（2列目） */
+.cell-main1 {
+	grid-column: 2;
 	display: flex;
 	justify-content: flex-start;
 	align-items: center;
-	gap: 56px;
-	font-weight: 700;
 }
 
-.attendance-detail-date-year {
-	font-size: 16px;
-	letter-spacing: 0.05em;
-}
-
-.attendance-detail-date-md {
-	font-size: 16px;
-	letter-spacing: 0.05em;
-}
-
-/* 時刻（input + 〜 + input） */
-.attendance-detail-time-range {
+/* 区切り（3列目：〜） */
+.cell-main2 {
+	grid-column: 3;
 	display: flex;
-	justify-content: flex-start;
+	justify-content: center;
 	align-items: center;
-	gap: 24px;
 }
 
+/* 右側の値（4列目） */
+.cell-main3 {
+	grid-column: 4;
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+}
+
+/* 「名前」「備考」みたいに 2〜4列をまとめて使う用 */
+.cell-full {
+	grid-column: 2 / 5;
+	padding-left: 0px;
+}
+
+/* 「名前」の行だけは真ん中寄せにしたい */
+.name-value {
+	display: flex;
+	justify-content: center;
+	text-align: center;
+}
+
+.attendance-detail-row-date .cell-main1,
+.attendance-detail-row-date .cell-main3 {
+	display: flex;
+	justify-content: center;
+	text-align: center;
+}
+
+/* 時刻 input */
 .attendance-detail-input-time {
-	width: 100px;
+	width: 100%;
+	max-width: 100%;
 	padding: 6px 8px;
 	border: 1px solid #dcdcdc;
 	border-radius: 4px;
 	text-align: center;
-	font-size: 15px;
+	font-size: 14px;
 	font-family: 'Inter', sans-serif;
 	font-weight: 800;
 	letter-spacing: 0.05em;
@@ -93,23 +116,39 @@
 	display: none;
 }
 
+/* テキスト表示用 */
 .attendance-detail-time {
 	font-size: 15px;
 	color: #444;
 }
 
+/* 「〜」 */
 .attendance-detail-tilde {
 	font-size: 16px;
 	color: #666;
 }
 
-/* 備考エリア */
-.attendance-detail-row-note .attendance-detail-value {
-	text-align: left;
+/* input／テキスト共通のブロック */
+.time-block {
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
+/* ===== 備考 ===== */
+
+/* 備考全体を「左時間〜右時間」と同じ幅にする */
+.attendance-detail-note-wrap {
+	/* time列2つ＋〜列の合計幅 */
+	width: calc(var(--time-col-width) * 2 + var(--tilde-col-width));
+	margin: 0 auto;
+	/* 真ん中に寄せる */
+}
+
+/* テキストエリア本体はラッパーの中でいっぱいに広げる */
 .attendance-detail-textarea {
 	width: 100%;
+	max-width: 100%;
 	min-height: 90px;
 	padding: 10px 12px;
 	border: 1px solid #dcdcdc;
@@ -117,6 +156,7 @@
 	font-size: 14px;
 	resize: vertical;
 	color: #333;
+	box-sizing: border-box;
 }
 
 /* 備考の表示用 */
@@ -128,23 +168,17 @@
 
 /* フッター（修正ボタン / メッセージ / 承認済みバッジ） */
 .attendance-detail-footer {
-	padding: 16px 20px 16px 40px;
+	padding: 24px 0 40px;
 	display: flex;
 	justify-content: flex-end;
-	align-items: center;
 }
 
 /* 修正ボタン */
 .attendance-detail-button {
 	display: inline-block;
 	min-width: 90px;
-
-	/* ← ここで高さと余白を決める。好みで調整OK */
 	padding: 10px 24px;
-
 	line-height: 1;
-	/* ← これが超大事 */
-
 	border-radius: 4px;
 	border: none;
 	background: #000;
