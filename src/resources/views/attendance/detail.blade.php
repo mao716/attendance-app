@@ -31,11 +31,21 @@
 				{{-- 日付 --}}
 				<div class="attendance-detail-row attendance-detail-row-date">
 					<div class="cell cell-label">日付</div>
-					<div class="cell cell-main1">{{ $attendance->work_date->format('Y年') }}</div>
-					<div class="cell cell-main2"></div>
-					<div class="cell cell-main3">{{ $attendance->work_date->format('n月j日') }}</div>
-				</div>
 
+					<div class="cell cell-main1">
+						<span class="attendance-detail-date-year">
+							{{ $attendance->work_date->format('Y年') }}
+						</span>
+					</div>
+
+					<div class="cell cell-main2"></div>
+
+					<div class="cell cell-main3">
+						<span class="attendance-detail-date-md">
+							{{ $attendance->work_date->format('n月j日') }}
+						</span>
+					</div>
+				</div>
 
 				{{-- 出勤・退勤 --}}
 				<div class="attendance-detail-row">
@@ -43,23 +53,33 @@
 
 					<div class="cell cell-main1 time-block">
 						@if ($isEditable)
-						<input type="time" name="clock_in_at"
+						<input
+							type="time"
+							name="clock_in_at"
 							class="attendance-detail-input-time"
 							value="{{ old('clock_in_at', $clockInTime) }}">
 						@else
-						<span class="attendance-detail-time">{{ $clockInTime }}</span>
+						<span class="attendance-detail-time">
+							{{ $clockInTime ?? '--:--' }}
+						</span>
 						@endif
 					</div>
 
-					<div class="cell cell-main2">〜</div>
+					<div class="cell cell-main2">
+						<span class="attendance-detail-tilde">〜</span>
+					</div>
 
 					<div class="cell cell-main3 time-block">
 						@if ($isEditable)
-						<input type="time" name="clock_out_at"
+						<input
+							type="time"
+							name="clock_out_at"
 							class="attendance-detail-input-time"
 							value="{{ old('clock_out_at', $clockOutTime) }}">
 						@else
-						<span class="attendance-detail-time">{{ $clockOutTime }}</span>
+						<span class="attendance-detail-time">
+							{{ $clockOutTime ?? '--:--' }}
+						</span>
 						@endif
 					</div>
 				</div>
@@ -72,36 +92,21 @@
 					</div>
 
 					{{-- 左：休憩開始 --}}
-					@php
-					// 元データから表示用の値を作る（--:-- は空にする）
-					$rawStart = $row['start'] ?? '';
-					if ($rawStart === '--:--') {
-					$rawStart = '';
-					}
-					$startValue = old("breaks.$index.start", $rawStart);
-
-					$rawEnd = $row['end'] ?? '';
-					if ($rawEnd === '--:--') {
-					$rawEnd = '';
-					}
-					$endValue = old("breaks.$index.end", $rawEnd);
-					@endphp
-
 					<div class="cell cell-main1 time-block">
 						@if ($isEditable)
 						<input
 							type="time"
 							name="breaks[{{ $index }}][start]"
 							class="attendance-detail-input-time"
-							value="{{ $startValue }}">
+							value="{{ old('breaks.' . $index . '.start', $row['start']) }}">
 						@else
-						@if ($rawStart !== '')
-						<span class="attendance-detail-time">{{ $rawStart }}</span>
-						@endif
+						<span class="attendance-detail-time">
+							{{ $row['start'] ?? '--:--' }}
+						</span>
 						@endif
 					</div>
 
-					{{-- 中央：〜 は常に表示 --}}
+					{{-- 中央：〜（常に表示） --}}
 					<div class="cell cell-main2">
 						<span class="attendance-detail-tilde">〜</span>
 					</div>
@@ -113,11 +118,11 @@
 							type="time"
 							name="breaks[{{ $index }}][end]"
 							class="attendance-detail-input-time"
-							value="{{ $endValue }}">
+							value="{{ old('breaks.' . $index . '.end', $row['end']) }}">
 						@else
-						@if ($rawEnd !== '')
-						<span class="attendance-detail-time">{{ $rawEnd }}</span>
-						@endif
+						<span class="attendance-detail-time">
+							{{ $row['end'] ?? '--:--' }}
+						</span>
 						@endif
 					</div>
 				</div>
@@ -158,8 +163,10 @@
 			</p>
 			@else
 			@if ($isEditable)
-			{{-- form の外にあるけど、PG06 で使うとき用に form 属性だけ付けておく --}}
-			<button type="submit" form="attendance-detail-form" class="attendance-detail-button">
+			<button
+				type="submit"
+				form="attendance-detail-form"
+				class="attendance-detail-button">
 				修正
 			</button>
 			@endif

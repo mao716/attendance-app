@@ -38,8 +38,8 @@ class AttendanceDetailController extends Controller
 				$requestStatus = 'pending';
 				$isEditable    = false;   // 承認待ちは修正不可
 			} elseif ($latestRequest->status === StampCorrectionRequest::STATUS_APPROVED) {
-				$requestStatus = 'approved';
-				$isEditable    = false;   // 承認済みも再申請不可
+				$requestStatus = 'approved'; // 承認済み
+				$isEditable    = false;      // 再申請不可
 			}
 		}
 
@@ -47,22 +47,25 @@ class AttendanceDetailController extends Controller
 		$clockInTime  = optional($attendance->clock_in_at)->format('H:i');
 		$clockOutTime = optional($attendance->clock_out_at)->format('H:i');
 
+		// 休憩（存在するものだけ H:i にする）
 		$breakRows = $attendance->breaks->map(function ($break) {
 			return [
 				'start' => optional($break->break_start_at)->format('H:i'),
 				'end'   => optional($break->break_end_at)->format('H:i'),
 			];
-		})->values();
+		})->values()->toArray();
 
-		// 編集可能なときだけ「追加用の空行」を1行足す（UIの 休憩2 行）
+		// 編集可能なときだけ「追加用の空行」を足して、最低2行にする
 		if ($isEditable) {
-			$breakRows->push([
-				'start' => null,
-				'end'   => null,
-			]);
+			for ($i = count($breakRows); $i < 2; $i++) {
+				$breakRows[] = [
+					'start' => null,
+					'end'   => null,
+				];
+			}
 		}
 
-		// 備考は「最新の修正申請の理由」を表示（なければ空）
+		// 備考は「最新の修正申請の理由」を表示（なければ null）
 		$note = $latestRequest?->reason;
 
 		return view('attendance.detail', [
