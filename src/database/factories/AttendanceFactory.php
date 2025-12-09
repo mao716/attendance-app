@@ -39,8 +39,12 @@ class AttendanceFactory extends Factory
 
 		// 休憩時間（30〜90分）※勤務時間より長くならないように保険を入れる
 		$breakMinutes = $this->faker->numberBetween(30, 90);
-		if ($breakMinutes >= $workMinutes) {
-			$breakMinutes = max(0, $workMinutes - 1);
+		// 勤務時間が休憩より短いときの保険
+		if ($workMinutes <= 0) {
+			$workMinutes = 0;
+			$breakMinutes = 0;
+		} elseif ($breakMinutes >= $workMinutes) {
+			$breakMinutes = $workMinutes - 1; // 少なくとも1分は働く
 		}
 
 		// 実働時間

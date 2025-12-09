@@ -16,7 +16,7 @@ class AttendanceController extends Controller
 	/**
 	 * 打刻画面表示
 	 */
-	public function index(Request $request): View
+	public function index(): View
 	{
 		$user = Auth::user();
 		$today = Carbon::today();
@@ -57,7 +57,7 @@ class AttendanceController extends Controller
 	/**
 	 * 出勤
 	 */
-	public function clockIn(Request $request): RedirectResponse
+	public function clockIn(): RedirectResponse
 	{
 		$user = Auth::user();
 		$today = Carbon::today();
@@ -89,11 +89,10 @@ class AttendanceController extends Controller
 	}
 
 
-
 	/**
 	 * 休憩開始
 	 */
-	public function breakIn(Request $request): RedirectResponse
+	public function breakIn(): RedirectResponse
 	{
 		$user = Auth::user();
 		$today = Carbon::today();
@@ -124,7 +123,7 @@ class AttendanceController extends Controller
 	/**
 	 * 休憩終了
 	 */
-	public function breakOut(Request $request): RedirectResponse
+	public function breakOut(): RedirectResponse
 	{
 		$user = Auth::user();
 		$today = Carbon::today();
@@ -176,7 +175,7 @@ class AttendanceController extends Controller
 	/**
 	 * 退勤
 	 */
-	public function clockOut(Request $request): RedirectResponse
+	public function clockOut(): RedirectResponse
 	{
 		$user = Auth::user();
 		$today = Carbon::today();

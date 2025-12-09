@@ -38,8 +38,8 @@ class AttendanceDetailController extends Controller
 				$requestStatus = 'pending';
 				$isEditable    = false;   // 承認待ちは修正不可
 			} elseif ($latestRequest->status === StampCorrectionRequest::STATUS_APPROVED) {
-				$requestStatus = 'approved'; // 承認済み
-				$isEditable    = false;      // 再申請不可
+				$requestStatus = 'approved';
+				// $isEditable は true のまま → 再修正OK
 			}
 		}
 

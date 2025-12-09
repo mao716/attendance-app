@@ -13,8 +13,7 @@
 
 		<div class="attendance-detail-card">
 			@if ($isEditable)
-			{{-- PG06 でルート実装予定なので action は一旦 # にしておく --}}
-			<form action="#" method="post" id="attendance-detail-form" class="attendance-detail-form">
+			<form action="{{ route('stamp_correction_request.store', ['attendance' => $attendance->id]) }}" method="post" id="attendance-detail-form" class="attendance-detail-form">
 				@csrf
 				@endif
 
@@ -134,9 +133,8 @@
 					<div class="cell cell-full">
 						@if ($isEditable)
 						<div class="attendance-detail-note-wrap">
-							<textarea
-								name="reason"
-								class="attendance-detail-textarea">{{ old('reason', $note) }}</textarea>
+							<textarea name="reason" class="attendance-detail-textarea">
+							{{ old('reason', $note) }}</textarea>
 						</div>
 						@else
 						<p class="attendance-detail-note-text">
