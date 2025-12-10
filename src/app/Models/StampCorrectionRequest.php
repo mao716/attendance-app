@@ -60,4 +60,17 @@ class StampCorrectionRequest extends Model
 	{
 		return $this->status === self::STATUS_APPROVED;
 	}
+
+	public function getStatusLabelAttribute(): string
+	{
+		if ($this->isPending()) {
+			return '承認待ち';
+		}
+
+		if ($this->isApproved()) {
+			return '承認済み';
+		}
+
+		return '不明';
+	}
 }

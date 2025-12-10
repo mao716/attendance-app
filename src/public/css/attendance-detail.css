@@ -78,18 +78,22 @@
 	grid-column: 2 / 5;
 }
 
-/* 名前の行だけ中央揃え */
+/* 名前の行：左揃え */
 .name-value {
-	display: flex;
-	justify-content: center;
-	text-align: center;
+	justify-content: flex-start;
+	text-align: left;
 }
 
-/* 日付の年・月日も各セルの中で中央揃え */
+/* 日付（年・月日）は左揃え（2カラム分） */
 .attendance-detail-row-date .cell-main1,
-.attendance-detail-row-date .cell-main3 {
-	justify-content: center;
-	text-align: center;
+.attendance-detail-row-date .cell-main2 {
+	justify-content: flex-start;
+	text-align: left;
+}
+
+/* 月日を改行させない */
+.attendance-detail-date-md {
+	white-space: nowrap;
 }
 
 /* 時刻 input */
@@ -114,14 +118,14 @@
 
 /* テキスト表示用（閲覧モードの時間） */
 .attendance-detail-time {
-	font-size: 15px;
-	color: #444;
+	font-size: 14px;
+	color: #333;
 }
 
 /* 「〜」 */
 .attendance-detail-tilde {
-	font-size: 16px;
-	color: #666;
+	font-size: 14px;
+	color: #333;
 }
 
 /* input／テキスト共通のブロック（row側のflexと揃えるだけ） */
@@ -190,13 +194,14 @@
 
 /* 承認済みバッジ */
 .attendance-detail-status-badge {
-	background: #c8c8c8;
-	color: #fff;
-	padding: 10px 28px;
-	border-radius: 4px;
-	font-size: 14px;
-	font-weight: 700;
 	display: inline-block;
+	background: #777777;
+	color: #fff;
+	padding: 10px 24px;
+	border-radius: 4px;
+	font-size: 16px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
 }
 
 /* ===== スマホ幅（〜767px）のレイアウト調整 ===== */

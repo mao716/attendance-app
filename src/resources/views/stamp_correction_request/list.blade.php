@@ -3,99 +3,102 @@
 @section('title', '申請一覧')
 
 @push('css')
-<link rel="stylesheet" href="{{ asset('css/stamp-correction-list.css') }}">
+<link rel="stylesheet" href="{{ asset('css/stamp-correction-request.css') }}">
 @endpush
 
 @section('content')
-<div class="stamp-list-page">
-	<div class="stamp-list">
+@php
+$tab = request('tab', 'pending');
+if (!in_array($tab, ['pending', 'approved'], true)) {
+$tab = 'pending';
+}
+
+$isPendingTab = $tab === 'pending';
+@endphp
+<div class="request-list-page">
+	<div class="request-list">
 		<h1 class="page-title">申請一覧</h1>
 
-		{{-- タブ風ヘッダー（見た目だけでもOK） --}}
-		<div class="stamp-list-tabs">
-			<span class="tab-item is-active">承認待ち</span>
-			<span class="tab-item">承認済み</span>
+		{{-- タブナビゲーション --}}
+		<div class="request-tabs">
+			<a
+				href="{{ route('stamp_correction_request.user_index', ['tab' => 'pending']) }}"
+				class="request-tab{{ $isPendingTab ? ' is-active' : '' }}">
+				承認待ち
+			</a>
+			<a
+				href="{{ route('stamp_correction_request.user_index', ['tab' => 'approved']) }}"
+				class="request-tab{{ !$isPendingTab ? ' is-active' : '' }}">
+				承認済み
+			</a>
 		</div>
 
-		{{-- 承認待ち一覧 --}}
-		<div class="stamp-list-section">
-			<table class="stamp-list-table">
+		<div class="table-wrap">
+			<table class="table">
 				<thead>
 					<tr>
 						<th>状態</th>
 						<th>名前</th>
-						<th>対象日</th>
+						<th class="table-col-date">対象日時</th>
 						<th>申請理由</th>
-						<th>申請日時</th>
-						<th>詳細</th>
+						<th class="table-col-date">申請日時</th>
+						<th class="table-col-detail">詳細</th>
 					</tr>
 				</thead>
 				<tbody>
-					@forelse ($pendingRequests as $request)
-					<tr>
-						<td>承認待ち</td>
-						<td>{{ $request->user->name }}</td>
-						<td>
-							{{-- attendances.work_date を日付で表示 --}}
-							{{ optional($request->attendance->work_date)->format('Y/m/d') }}
-						</td>
-						<td>{{ $request->reason }}</td>
-						<td>{{ $request->created_at->format('Y/m/d') }}</td>
-						<td>
-							{{-- 勤怠詳細（閲覧専用）へ --}}
-							<a
-								href="{{ route('attendance.detail', ['attendance' => $request->attendance_id]) }}"
-								class="stamp-list-link">
-								詳細
-							</a>
-						</td>
-					</tr>
-					@empty
-					<tr>
-						<td colspan="6" class="stamp-list-empty">
-							承認待ちの申請はありません。
-						</td>
-					</tr>
-					@endforelse
-				</tbody>
-			</table>
-		</div>
+					@php
+					/** @var \Illuminate\Support\Collection $list */
+					$list = $isPendingTab ? $pendingRequests : $approvedRequests;
+					@endphp
 
-		{{-- 承認済み一覧 --}}
-		<div class="stamp-list-section">
-			<table class="stamp-list-table">
-				<thead>
+					@forelse ($list as $requestRow)
 					<tr>
-						<th>状態</th>
-						<th>名前</th>
-						<th>対象日</th>
-						<th>申請理由</th>
-						<th>申請日時</th>
-						<th>詳細</th>
-					</tr>
-				</thead>
-				<tbody>
-					@forelse ($approvedRequests as $request)
-					<tr>
-						<td>承認済み</td>
-						<td>{{ $request->user->name }}</td>
-						<td>
-							{{ optional($request->attendance->work_date)->format('Y/m/d') }}
+						{{-- 状態（モデルのアクセサ） --}}
+						<td>{{ $requestRow->status_label }}</td>
+
+						{{-- 名前 --}}
+						<td>{{ optional($requestRow->user)->name }}</td>
+
+						{{-- 対象日時：勤怠の勤務日を表示（なければハイフン） --}}
+						<td class="table-col-date">
+							@if ($requestRow->attendance && $requestRow->attendance->work_date)
+							{{ \Illuminate\Support\Carbon::parse($requestRow->attendance->work_date)->format('Y/m/d') }}
+							@else
+							-
+							@endif
 						</td>
-						<td>{{ $request->reason }}</td>
-						<td>{{ $request->created_at->format('Y/m/d') }}</td>
+
+						{{-- 申請理由（長すぎる場合は少しだけ切る） --}}
 						<td>
+							{{ \Illuminate\Support\Str::limit($requestRow->reason, 13) }}
+						</td>
+
+						{{-- 申請日時：作成日時 --}}
+						<td class="table-col-date">
+							{{ $requestRow->created_at->format('Y/m/d') }}
+						</td>
+
+						{{-- 詳細：勤怠詳細画面（PG05）へ --}}
+						<td class="table-col-detail">
+							@if ($requestRow->attendance)
 							<a
-								href="{{ route('attendance.detail', ['attendance' => $request->attendance_id]) }}"
-								class="stamp-list-link">
+								href="{{ route('attendance.detail', ['attendance'   => $requestRow->attendance->id, 'from_request' => 1,]) }}"
+								class="table-detail-link">
 								詳細
 							</a>
+							@else
+							-
+							@endif
 						</td>
 					</tr>
 					@empty
 					<tr>
-						<td colspan="6" class="stamp-list-empty">
-							承認済みの申請はありません。
+						<td colspan="6">
+							@if ($isPendingTab)
+							承認待ちの修正申請はありません。
+							@else
+							承認済みの修正申請はありません。
+							@endif
 						</td>
 					</tr>
 					@endforelse

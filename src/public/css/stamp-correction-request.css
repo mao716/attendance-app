@@ -1,0 +1,45 @@
+.request-list-page {
+	padding-top: 32px;
+	padding-bottom: 60px;
+}
+
+.request-list {
+	max-width: 840px;
+	margin: 0 auto;
+	padding: 0 40px;
+}
+
+/* タブナビゲーション */
+.request-tabs {
+	display: flex;
+	gap: 32px;
+	margin-bottom: 34px;
+	border-bottom: 2px solid #868686;
+	padding-bottom: 6px;
+}
+
+.request-tab {
+	position: relative;
+	font-size: 15px;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-decoration: none;
+	color: #616161;
+	padding-bottom: 6px;
+	padding-left: 48px;
+}
+
+.request-tab.is-active {
+	color: #000;
+}
+
+/* スマホ時のタブレイアウト微調整 */
+@media (max-width: 767px) {
+	.request-tabs {
+		gap: 16px;
+	}
+
+	.request-tab {
+		font-size: 14px;
+	}
+}

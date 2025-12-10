@@ -6,15 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\Attendance;
 use App\Models\StampCorrectionRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class AttendanceDetailController extends Controller
 {
-	public function show(Attendance $attendance)
+	public function show(Request $request, Attendance $attendance)
 	{
 		// 自分以外の勤怠IDを叩かれたときは403
 		if ($attendance->user_id !== Auth::id()) {
 			abort(403);
 		}
+
+		// 申請一覧から来たかどうか（/attendance/detail/{id}?from_request=1）
+		$fromRequestList = $request->boolean('from_request');
 
 		// 関連ロード（休憩・修正申請）
 		$attendance->load([
@@ -35,11 +39,20 @@ class AttendanceDetailController extends Controller
 
 		if ($latestRequest) {
 			if ($latestRequest->status === StampCorrectionRequest::STATUS_PENDING) {
+				// 承認待ち：どこから見ても編集不可
 				$requestStatus = 'pending';
-				$isEditable    = false;   // 承認待ちは修正不可
+				$isEditable    = false;
 			} elseif ($latestRequest->status === StampCorrectionRequest::STATUS_APPROVED) {
-				$requestStatus = 'approved';
-				// $isEditable は true のまま → 再修正OK
+				if ($fromRequestList) {
+					// ★ 申請一覧から見た承認済み → 閲覧専用（バッジ表示）
+					$requestStatus = 'approved';
+					$isEditable    = false;
+				} else {
+					// ★ 勤怠一覧から見た承認済み → 再修正OK
+					// requestStatus は null のまま扱う（= Blade 側では「ステータスなし」として扱われる）
+					$requestStatus = null;
+					$isEditable    = true;
+				}
 			}
 		}
 

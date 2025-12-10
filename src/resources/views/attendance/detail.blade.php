@@ -7,13 +7,22 @@
 @endpush
 
 @section('content')
+
+@php
+$canEdit = $isEditable && !$requestStatus;
+@endphp
+
 <div class="attendance-detail-page">
 	<div class="attendance-detail">
 		<h1 class="page-title">勤怠詳細</h1>
 
 		<div class="attendance-detail-card">
-			@if ($isEditable)
-			<form action="{{ route('stamp_correction_request.store', ['attendance' => $attendance->id]) }}" method="post" id="attendance-detail-form" class="attendance-detail-form">
+			@if ($canEdit)
+			<form
+				action="{{ route('stamp_correction_request.store', ['attendance' => $attendance->id]) }}"
+				method="post"
+				id="attendance-detail-form"
+				class="attendance-detail-form">
 				@csrf
 				@endif
 
@@ -31,19 +40,21 @@
 				<div class="attendance-detail-row attendance-detail-row-date">
 					<div class="cell cell-label">日付</div>
 
+					{{-- 年（左から2カラム目） --}}
 					<div class="cell cell-main1">
 						<span class="attendance-detail-date-year">
 							{{ $attendance->work_date->format('Y年') }}
 						</span>
 					</div>
 
-					<div class="cell cell-main2"></div>
-
-					<div class="cell cell-main3">
+					{{-- 月日（左から3カラム目） --}}
+					<div class="cell cell-main2">
 						<span class="attendance-detail-date-md">
 							{{ $attendance->work_date->format('n月j日') }}
 						</span>
 					</div>
+
+					<div class="cell cell-main3"></div>
 				</div>
 
 				{{-- 出勤・退勤 --}}
@@ -51,7 +62,7 @@
 					<div class="cell cell-label">出勤・退勤</div>
 
 					<div class="cell cell-main1 time-block">
-						@if ($isEditable)
+						@if ($canEdit)
 						<input
 							type="time"
 							name="clock_in_at"
@@ -69,7 +80,7 @@
 					</div>
 
 					<div class="cell cell-main3 time-block">
-						@if ($isEditable)
+						@if ($canEdit)
 						<input
 							type="time"
 							name="clock_out_at"
@@ -83,7 +94,7 @@
 					</div>
 				</div>
 
-				{{-- 休憩・休憩2 --}}
+				{{-- 休憩・休憩2... --}}
 				@foreach ($breakRows as $index => $row)
 				<div class="attendance-detail-row">
 					<div class="cell cell-label">
@@ -92,7 +103,7 @@
 
 					{{-- 左：休憩開始 --}}
 					<div class="cell cell-main1 time-block">
-						@if ($isEditable)
+						@if ($canEdit)
 						<input
 							type="time"
 							name="breaks[{{ $index }}][start]"
@@ -112,7 +123,7 @@
 
 					{{-- 右：休憩終了 --}}
 					<div class="cell cell-main3 time-block">
-						@if ($isEditable)
+						@if ($canEdit)
 						<input
 							type="time"
 							name="breaks[{{ $index }}][end]"
@@ -131,10 +142,11 @@
 				<div class="attendance-detail-row">
 					<div class="cell cell-label">備考</div>
 					<div class="cell cell-full">
-						@if ($isEditable)
+						@if ($canEdit)
 						<div class="attendance-detail-note-wrap">
-							<textarea name="reason" class="attendance-detail-textarea">
-							{{ old('reason', $note) }}</textarea>
+							<textarea
+								name="reason"
+								class="attendance-detail-textarea">{{ old('reason', $note) }}</textarea>
 						</div>
 						@else
 						<p class="attendance-detail-note-text">
@@ -144,7 +156,7 @@
 					</div>
 				</div>
 
-				@if ($isEditable)
+				@if ($canEdit)
 			</form>
 			@endif
 		</div> {{-- /.attendance-detail-card --}}
@@ -160,7 +172,7 @@
 				承認済み
 			</p>
 			@else
-			@if ($isEditable)
+			@if ($canEdit)
 			<button
 				type="submit"
 				form="attendance-detail-form"

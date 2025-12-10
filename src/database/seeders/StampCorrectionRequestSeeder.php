@@ -53,7 +53,7 @@ class StampCorrectionRequestSeeder extends Seeder
 				'after_clock_out_at'   => $afterClockOut,
 				'after_break_minutes'  => $afterBreak,
 
-				'reason'               => '打刻漏れのため修正をお願いします。',
+				'reason'               => '遅延のため',
 
 				'status'               => $status,
 				'approved_at'          => $status === 1 ? now() : null,
