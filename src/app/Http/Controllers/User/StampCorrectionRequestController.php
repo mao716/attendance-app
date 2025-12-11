@@ -51,62 +51,49 @@ class StampCorrectionRequestController extends Controller
 
 		$validated = $request->validated();
 
-		// 元の勤怠情報（before 系に保存する用）
-		$beforeClockInAt      = $attendance->clock_in_at;
-		$beforeClockOutAt     = $attendance->clock_out_at;
-		$beforeBreakMinutes   = $attendance->total_break_minutes;
+		// 勤務日
+		$workDate = $attendance->work_date->format('Y-m-d');
 
-		// 勤務日（"Y-m-d" だけ取り出して使う）
-		$workDate = Carbon::parse($attendance->work_date)->format('Y-m-d');
+		// ---- before（元の値） ----
+		$beforeClockInAt    = $attendance->clock_in_at;
+		$beforeClockOutAt   = $attendance->clock_out_at;
+		$beforeBreakMinutes = $attendance->total_break_minutes;
 
-		// ---- after の出退勤を決定 ----
-		// 入力が空なら「元の値」をそのまま after に使う
+		// ---- after（出勤・退勤） ----
 		$clockInStr  = $validated['clock_in_at']  ?? null;
 		$clockOutStr = $validated['clock_out_at'] ?? null;
 
 		if ($clockInStr && $clockOutStr) {
-			$afterClockInAt = Carbon::parse($workDate . ' ' . $clockInStr);
-			$afterClockOutAt = Carbon::parse($workDate . ' ' . $clockOutStr);
+			$afterClockInAt  = Carbon::parse("$workDate $clockInStr");
+			$afterClockOutAt = Carbon::parse("$workDate $clockOutStr");
 		} else {
 			$afterClockInAt  = $beforeClockInAt;
 			$afterClockOutAt = $beforeClockOutAt;
 		}
 
-		// ---- after の休憩合計分数を計算 ----
+		// ---- after（休憩 明細保存のため入力取得） ----
 		$breakInputs = $validated['breaks'] ?? [];
-
-		$afterBreakMinutes = null;
-
-		// 1つでも開始/終了が入力されていたら「入力値から再計算」
 		$hasAnyBreakInput = collect($breakInputs)->contains(function ($row) {
 			return !empty($row['start']) || !empty($row['end']);
 		});
 
+		// 合計休憩時間をまず計算
+		$afterBreakMinutes = 0;
+
 		if ($hasAnyBreakInput) {
-			$afterBreakMinutes = 0;
-
 			foreach ($breakInputs as $row) {
-				$start = $row['start'] ?? null;
-				$end   = $row['end'] ?? null;
-
-				if (!$start || !$end) {
-					continue; // ここは FormRequest 側で本来は弾かれている想定
+				if (!empty($row['start']) && !empty($row['end'])) {
+					$startAt = Carbon::parse("$workDate {$row['start']}");
+					$endAt   = Carbon::parse("$workDate {$row['end']}");
+					$afterBreakMinutes += $startAt->diffInMinutes($endAt);
 				}
-
-				$startAt = Carbon::parse($workDate . ' ' . $start);
-				$endAt   = Carbon::parse($workDate . ' ' . $end);
-
-				$afterBreakMinutes += $startAt->diffInMinutes($endAt);
 			}
 		} else {
-			// 休憩入力が何もなければ元の合計休憩時間をそのまま使用
 			$afterBreakMinutes = $beforeBreakMinutes;
 		}
 
-		// ---- 既に承認待ちがある場合はエラー返却（多重申請防止） ----
-		$latestRequest = $attendance->correctionRequests()
-			->latest()
-			->first();
+		// ---- 多重申請防止（pending がある時） ----
+		$latestRequest = $attendance->correctionRequests()->latest()->first();
 
 		if ($latestRequest && $latestRequest->status === StampCorrectionRequest::STATUS_PENDING) {
 			return back()
@@ -114,8 +101,8 @@ class StampCorrectionRequestController extends Controller
 				->withInput();
 		}
 
-		// ---- 修正申請レコード作成 ----
-		StampCorrectionRequest::create([
+		// ---- 修正申請（親）を作成 ----
+		$requestRecord = StampCorrectionRequest::create([
 			'attendance_id'        => $attendance->id,
 			'user_id'              => Auth::id(),
 			'before_clock_in_at'   => $beforeClockInAt,
@@ -128,7 +115,22 @@ class StampCorrectionRequestController extends Controller
 			'status'               => StampCorrectionRequest::STATUS_PENDING,
 		]);
 
-		return redirect()
-			->route('stamp_correction_request.user_index');
+		// ---- 修正後の休憩を子テーブルへ保存 ----
+		if ($hasAnyBreakInput) {
+			$order = 1;
+
+			foreach ($breakInputs as $row) {
+				if (!empty($row['start']) && !empty($row['end'])) {
+					$requestRecord->correctionBreaks()->create([
+						'break_order'    => $order,
+						'break_start_at' => Carbon::parse("$workDate {$row['start']}"),
+						'break_end_at'   => Carbon::parse("$workDate {$row['end']}"),
+					]);
+					$order++;
+				}
+			}
+		}
+
+		return redirect()->route('stamp_correction_request.user_index');
 	}
 }

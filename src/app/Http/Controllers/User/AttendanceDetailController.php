@@ -20,22 +20,23 @@ class AttendanceDetailController extends Controller
 		// 申請一覧から来たかどうか（/attendance/detail/{id}?from_request=1）
 		$fromRequestList = $request->boolean('from_request');
 
-		// 関連ロード（休憩・修正申請）
+		// 関連ロード（休憩・修正申請 + その休憩）
 		$attendance->load([
 			'breaks' => function ($query) {
 				$query->orderBy('break_start_at');
 			},
 			'correctionRequests' => function ($query) {
-				$query->latest();
+				$query->latest(); // created_at desc
 			},
+			'correctionRequests.correctionBreaks',
 		]);
 
 		// 最新の修正申請（あれば）
 		$latestRequest = $attendance->correctionRequests->first();
 
 		// ---- 申請状態の判定 ----
-		$requestStatus = null;      // 'pending' | 'approved' | null
-		$isEditable    = true;      // 修正ボタンを出すかどうか
+		$requestStatus = null; // 'pending' | 'approved' | null
+		$isEditable    = true; // フォームを出すかどうか
 
 		if ($latestRequest) {
 			if ($latestRequest->status === StampCorrectionRequest::STATUS_PENDING) {
@@ -44,29 +45,63 @@ class AttendanceDetailController extends Controller
 				$isEditable    = false;
 			} elseif ($latestRequest->status === StampCorrectionRequest::STATUS_APPROVED) {
 				if ($fromRequestList) {
-					// ★ 申請一覧から見た承認済み → 閲覧専用（バッジ表示）
+					// 申請一覧から見た承認済み → 閲覧専用（バッジ表示）
 					$requestStatus = 'approved';
 					$isEditable    = false;
 				} else {
-					// ★ 勤怠一覧から見た承認済み → 再修正OK
-					// requestStatus は null のまま扱う（= Blade 側では「ステータスなし」として扱われる）
+					// 勤怠一覧から見た承認済み → 再修正OK
+					// requestStatus は null のまま扱う（= Blade ではステータスなし）
 					$requestStatus = null;
 					$isEditable    = true;
 				}
 			}
 		}
 
-		// ---- 表示用の時刻フォーマット ----
-		$clockInTime  = optional($attendance->clock_in_at)->format('H:i');
-		$clockOutTime = optional($attendance->clock_out_at)->format('H:i');
+		// ---- 出勤・退勤：表示用 DateTime を決定 ----
+		$displayClockInAt  = $attendance->clock_in_at;
+		$displayClockOutAt = $attendance->clock_out_at;
 
-		// 休憩（存在するものだけ H:i にする）
-		$breakRows = $attendance->breaks->map(function ($break) {
-			return [
-				'start' => optional($break->break_start_at)->format('H:i'),
-				'end'   => optional($break->break_end_at)->format('H:i'),
-			];
-		})->values()->toArray();
+		// 修正申請があれば after_* を優先（pending / approved 共通）
+		if ($latestRequest) {
+			if ($latestRequest->after_clock_in_at) {
+				$displayClockInAt = $latestRequest->after_clock_in_at;
+			}
+			if ($latestRequest->after_clock_out_at) {
+				$displayClockOutAt = $latestRequest->after_clock_out_at;
+			}
+		}
+
+		$clockInTime  = optional($displayClockInAt)->format('H:i');
+		$clockOutTime = optional($displayClockOutAt)->format('H:i');
+
+		// ---- 休憩行の決定 ----
+		$breakRows = [];
+
+		if ($latestRequest && $latestRequest->correctionBreaks->isNotEmpty()) {
+			// 修正後休憩があればそちらを優先（承認待ち・承認済みどちらも）
+			$breakRows = $latestRequest->correctionBreaks
+				->sortBy('break_order')
+				->map(function ($break) {
+					return [
+						'start' => optional($break->break_start_at)->format('H:i'),
+						'end'   => optional($break->break_end_at)->format('H:i'),
+					];
+				})
+				->values()
+				->toArray();
+		} else {
+			// 修正後休憩がなければ、元の勤怠の休憩
+			$breakRows = $attendance->breaks
+				->sortBy('break_start_at')
+				->map(function ($break) {
+					return [
+						'start' => optional($break->break_start_at)->format('H:i'),
+						'end'   => optional($break->break_end_at)->format('H:i'),
+					];
+				})
+				->values()
+				->toArray();
+		}
 
 		// 編集可能なときだけ「追加用の空行」を足して、最低2行にする
 		if ($isEditable) {

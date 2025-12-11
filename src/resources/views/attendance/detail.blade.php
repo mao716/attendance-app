@@ -16,6 +16,24 @@ $canEdit = $isEditable && !$requestStatus;
 	<div class="attendance-detail">
 		<h1 class="page-title">勤怠詳細</h1>
 
+		{{-- ▼ 画面上部にエラーをまとめて表示 --}}
+		@if ($errors->any())
+		<div class="attendance-detail-errors">
+			<ul class="attendance-detail-errors-list">
+				@foreach ($errors->all() as $error)
+				<li class="attendance-detail-error-item">{{ $error }}</li>
+				@endforeach
+			</ul>
+		</div>
+		@endif
+
+		{{-- ▼ 多重申請エラーなど（Controller で withErrors(['request' => ...]) したやつ） --}}
+		@if ($errors->has('request'))
+		<p class="attendance-detail-message is-error">
+			{{ $errors->first('request') }}
+		</p>
+		@endif
+
 		<div class="attendance-detail-card">
 			@if ($canEdit)
 			<form
@@ -101,14 +119,13 @@ $canEdit = $isEditable && !$requestStatus;
 						{{ $index === 0 ? '休憩' : '休憩' . ($index + 1) }}
 					</div>
 
-					{{-- 左：休憩開始 --}}
 					<div class="cell cell-main1 time-block">
 						@if ($canEdit)
 						<input
 							type="time"
 							name="breaks[{{ $index }}][start]"
 							class="attendance-detail-input-time"
-							value="{{ old('breaks.' . $index . '.start', $row['start']) }}">
+							value="{{ old("breaks.$index.start", $row['start']) }}">
 						@else
 						<span class="attendance-detail-time">
 							{{ $row['start'] ?? '--:--' }}
@@ -116,19 +133,17 @@ $canEdit = $isEditable && !$requestStatus;
 						@endif
 					</div>
 
-					{{-- 中央：〜（常に表示） --}}
 					<div class="cell cell-main2">
 						<span class="attendance-detail-tilde">〜</span>
 					</div>
 
-					{{-- 右：休憩終了 --}}
 					<div class="cell cell-main3 time-block">
 						@if ($canEdit)
 						<input
 							type="time"
 							name="breaks[{{ $index }}][end]"
 							class="attendance-detail-input-time"
-							value="{{ old('breaks.' . $index . '.end', $row['end']) }}">
+							value="{{ old("breaks.$index.end", $row['end']) }}">
 						@else
 						<span class="attendance-detail-time">
 							{{ $row['end'] ?? '--:--' }}
