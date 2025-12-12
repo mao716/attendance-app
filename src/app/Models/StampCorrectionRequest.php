@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\Attendance;
@@ -41,20 +43,20 @@ class StampCorrectionRequest extends Model
 	];
 
 	// 修正元の勤怠
-	public function attendance()
+	public function attendance(): BelongsTo
 	{
-		return $this->belongsTo(Attendance::class);
+		return $this->belongsTo(Attendance::class, 'attendance_id');
 	}
 
 	// 申請したユーザー
-	public function user()
+	public function user(): BelongsTo
 	{
-		return $this->belongsTo(User::class);
+		return $this->belongsTo(User::class, 'user_id');
 	}
 
-	public function correctionBreaks()
+	public function correctionBreaks(): HasMany
 	{
-		return $this->hasMany(StampCorrectionBreak::class);
+		return $this->hasMany(StampCorrectionBreak::class, 'stamp_correction_request_id');
 	}
 
 	public function isPending(): bool

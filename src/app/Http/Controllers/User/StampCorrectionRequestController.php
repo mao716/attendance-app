@@ -20,13 +20,13 @@ class StampCorrectionRequestController extends Controller
 	{
 		$userId = Auth::id();
 
-		$pendingRequests = StampCorrectionRequest::with('attendance')
+		$pendingRequests = StampCorrectionRequest::with(['attendance', 'user'])
 			->where('user_id', $userId)
 			->where('status', StampCorrectionRequest::STATUS_PENDING)
 			->orderByDesc('created_at')
 			->get();
 
-		$approvedRequests = StampCorrectionRequest::with('attendance')
+		$approvedRequests = StampCorrectionRequest::with(['attendance', 'user'])
 			->where('user_id', $userId)
 			->where('status', StampCorrectionRequest::STATUS_APPROVED)
 			->orderByDesc('approved_at')
@@ -132,5 +132,53 @@ class StampCorrectionRequestController extends Controller
 		}
 
 		return redirect()->route('stamp_correction_request.user_index');
+	}
+
+	public function showForUser(StampCorrectionRequest $stampCorrectionRequest)
+	{
+		// 本人以外は403
+		if ($stampCorrectionRequest->user_id !== Auth::id()) {
+			abort(403);
+		}
+
+		// 勤怠・修正休憩をロード
+		$stampCorrectionRequest->load([
+			'attendance.breaks' => fn($q) => $q->orderBy('break_start_at'),
+			'correctionBreaks'  => fn($q) => $q->orderBy('break_order'),
+		]);
+
+		$attendance = $stampCorrectionRequest->attendance;
+
+		// 申請一覧から来た詳細は「閲覧専用」にしたいので固定
+		$requestStatus = $stampCorrectionRequest->status === StampCorrectionRequest::STATUS_PENDING
+			? 'pending'
+			: 'approved';
+
+		$isEditable = false; // 申請詳細は編集不可
+
+		// 表示用（afterを優先）
+		$clockInTime  = optional($stampCorrectionRequest->after_clock_in_at)->format('H:i');
+		$clockOutTime = optional($stampCorrectionRequest->after_clock_out_at)->format('H:i');
+
+		$breakRows = $stampCorrectionRequest->correctionBreaks->map(function ($b) {
+			return [
+				'start' => optional($b->break_start_at)->format('H:i'),
+				'end'   => optional($b->break_end_at)->format('H:i'),
+			];
+		})->values()->toArray();
+
+		// 備考は申請理由
+		$note = $stampCorrectionRequest->reason;
+
+		return view('attendance.detail', [
+			'attendance'    => $attendance,
+			'user'          => Auth::user(),
+			'clockInTime'   => $clockInTime,
+			'clockOutTime'  => $clockOutTime,
+			'breakRows'     => $breakRows,
+			'note'          => $note,
+			'requestStatus' => $requestStatus,
+			'isEditable'    => $isEditable,
+		]);
 	}
 }

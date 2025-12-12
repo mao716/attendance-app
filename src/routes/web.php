@@ -76,64 +76,54 @@ Route::middleware(['auth'])->group(function () {
 		'/stamp_correction_request/list',
 		[UserStampCorrectionRequestController::class, 'indexForUser']
 	)->name('stamp_correction_request.user_index');
+
+	// 申請詳細（ユーザー）
+	Route::get('/stamp-correction-request/{stampCorrectionRequest}', [UserStampCorrectionRequestController::class, 'showForUser'])
+		->name('stamp_correction_request.user_show');
 });
 
 // ----------------------------------------
-// 管理者側
+// 管理者側（仮）
 // ----------------------------------------
 Route::prefix('admin')->name('admin.')->group(function () {
-	// 管理者ログイン前
+
+	// 管理者ログイン前（PG07）
 	Route::middleware('guest')->group(function () {
-		// PG07 管理者ログイン /admin/login
-		Route::get('/login', [AdminLoginController::class, 'showLoginForm'])
-			->name('login');
-		Route::post('/login', [AdminLoginController::class, 'authenticate'])
-			->name('login.perform');
+		Route::get('/login', [AdminLoginController::class, 'showLoginForm'])->name('login');
+		Route::post('/login', [AdminLoginController::class, 'authenticate'])->name('login.perform');
 	});
 
-	// 管理者ログイン後（role = 2 のみ）
-	Route::middleware(['auth', 'can:is-admin'])->group(function () {
-		Route::post('/logout', [AdminLoginController::class, 'logout'])
-			->name('logout');
+	// ★ 仮：ログインしてれば誰でも見れる（開発用）
+	Route::middleware(['auth'])->group(function () {
+		Route::get('/stamp_correction_request/list', [AdminStampCorrectionRequestController::class, 'index'])
+			->name('stamp_correction_request.index');
 
-		// PG08 日次勤怠一覧 /admin/attendance/list
-		Route::get('/attendance/list', [AdminAttendanceController::class, 'index'])
-			->name('attendance.list');
+		Route::get('/stamp_correction_request/approve/{request}', [AdminStampCorrectionRequestController::class, 'show'])
+			->name('stamp_correction_request.show');
 
-		// PG09 日次勤怠詳細 /admin/attendance/{id}
-		Route::get('/attendance/{attendance}', [AdminAttendanceController::class, 'show'])
-			->name('attendance.detail');
-
-		// 管理者による直接修正 /admin/attendance/{id}
-		Route::put('/attendance/{attendance}', [AdminAttendanceController::class, 'update'])
-			->name('attendance.update');
-
-		// PG10 スタッフ一覧 /admin/staff/list
-		Route::get('/staff/list', [StaffController::class, 'index'])
-			->name('staff.list');
-
-		// PG11 スタッフ別月次勤怠 /admin/attendance/staff/{id}
-		Route::get(
-			'/attendance/staff/{user}',
-			[StaffAttendanceController::class, 'index']
-		)->name('attendance.staff');
-
-		// PG12 修正申請一覧（管理者） /admin/stamp_correction_request/list
-		Route::get(
-			'/stamp_correction_request/list',
-			[AdminStampCorrectionRequestController::class, 'index']
-		)->name('stamp_correction_request.index');
-
-		// PG13 修正申請承認画面 /admin/stamp_correction_request/approve/{id}
-		Route::get(
-			'/stamp_correction_request/approve/{request}',
-			[AdminStampCorrectionRequestController::class, 'show']
-		)->name('stamp_correction_request.show');
-
-		// 承認ボタンのPOST
-		Route::post(
-			'/stamp_correction_request/approve/{request}',
-			[AdminStampCorrectionRequestController::class, 'approve']
-		)->name('stamp_correction_request.approve');
+		Route::post('/stamp_correction_request/approve/{request}', [AdminStampCorrectionRequestController::class, 'approve'])
+			->name('stamp_correction_request.approve');
 	});
 });
+
+/*
+|--------------------------------------------------------------------------
+| 管理者ルート（本番想定）※ admin実装開始時に復活
+|--------------------------------------------------------------------------
+Route::prefix('admin')->name('admin.')->group(function () {
+	Route::middleware(['auth', 'can:is-admin'])->group(function () {
+		Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');
+
+		Route::get('/attendance/list', [AdminAttendanceController::class, 'index'])->name('attendance.list');
+		Route::get('/attendance/{attendance}', [AdminAttendanceController::class, 'show'])->name('attendance.detail');
+		Route::put('/attendance/{attendance}', [AdminAttendanceController::class, 'update'])->name('attendance.update');
+
+		Route::get('/staff/list', [StaffController::class, 'index'])->name('staff.list');
+		Route::get('/attendance/staff/{user}', [StaffAttendanceController::class, 'index'])->name('attendance.staff');
+
+		Route::get('/stamp_correction_request/list', [AdminStampCorrectionRequestController::class, 'index'])->name('stamp_correction_request.index');
+		Route::get('/stamp_correction_request/approve/{request}', [AdminStampCorrectionRequestController::class, 'show'])->name('stamp_correction_request.show');
+		Route::post('/stamp_correction_request/approve/{request}', [AdminStampCorrectionRequestController::class, 'approve'])->name('stamp_correction_request.approve');
+	});
+});
+*/
