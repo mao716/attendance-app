@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class StampCorrectionBreak extends Model
 {
@@ -22,8 +23,11 @@ class StampCorrectionBreak extends Model
 		'break_order'    => 'integer',
 	];
 
-	public function correctionRequest()
+	public function correctionRequest(): BelongsTo
 	{
-		return $this->belongsTo(StampCorrectionRequest::class, 'stamp_correction_request_id');
+		return $this->belongsTo(
+			StampCorrectionRequest::class,
+			'stamp_correction_request_id'
+		);
 	}
 }

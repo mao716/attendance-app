@@ -56,7 +56,10 @@ class StampCorrectionRequest extends Model
 
 	public function correctionBreaks(): HasMany
 	{
-		return $this->hasMany(StampCorrectionBreak::class, 'stamp_correction_request_id');
+		return $this->hasMany(
+			StampCorrectionBreak::class,
+			'stamp_correction_request_id'
+		)->orderBy('break_order');
 	}
 
 	public function isPending(): bool

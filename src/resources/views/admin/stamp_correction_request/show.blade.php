@@ -26,8 +26,12 @@
 	@endforeach
 </ul>
 
+@if ($stampCorrectionRequest->isPending())
 <form method="post" action="{{ route('admin.stamp_correction_request.approve', $stampCorrectionRequest) }}">
 	@csrf
 	<button type="submit">承認する</button>
 </form>
+@else
+<p class="badge">承認済み</p>
+@endif
 @endsection

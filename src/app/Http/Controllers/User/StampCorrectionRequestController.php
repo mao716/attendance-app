@@ -154,31 +154,31 @@ class StampCorrectionRequestController extends Controller
 			? 'pending'
 			: 'approved';
 
-		$isEditable = false; // 申請詳細は編集不可
+		$isEditable = false;
 
-		// 表示用（afterを優先）
 		$clockInTime  = optional($stampCorrectionRequest->after_clock_in_at)->format('H:i');
 		$clockOutTime = optional($stampCorrectionRequest->after_clock_out_at)->format('H:i');
 
-		$breakRows = $stampCorrectionRequest->correctionBreaks->map(function ($b) {
-			return [
+		$breakRows = $stampCorrectionRequest->correctionBreaks
+			->sortBy('break_order')
+			->map(fn($b) => [
 				'start' => optional($b->break_start_at)->format('H:i'),
 				'end'   => optional($b->break_end_at)->format('H:i'),
-			];
-		})->values()->toArray();
+			])->values()->toArray();
 
-		// 備考は申請理由
-		$note = $stampCorrectionRequest->reason;
+		$noteForDisplay = $stampCorrectionRequest->reason;
+		$noteForForm = null;
 
 		return view('attendance.detail', [
-			'attendance'    => $attendance,
-			'user'          => Auth::user(),
-			'clockInTime'   => $clockInTime,
-			'clockOutTime'  => $clockOutTime,
-			'breakRows'     => $breakRows,
-			'note'          => $note,
-			'requestStatus' => $requestStatus,
-			'isEditable'    => $isEditable,
+			'attendance'     => $attendance,
+			'user'           => Auth::user(),
+			'clockInTime'    => $clockInTime,
+			'clockOutTime'   => $clockOutTime,
+			'breakRows'      => $breakRows,
+			'noteForDisplay' => $noteForDisplay,
+			'noteForForm'    => $noteForForm,
+			'requestStatus'  => $requestStatus,
+			'isEditable'     => $isEditable,
 		]);
 	}
 }

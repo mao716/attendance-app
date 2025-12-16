@@ -82,10 +82,15 @@ $isPendingTab = $tab === 'pending';
 						<td class="table-col-detail">
 							@if ($requestRow->attendance)
 							<a
-								href="{{ route('attendance.detail', ['attendance'   => $requestRow->attendance->id, 'from_request' => 1,]) }}"
+								href="{{ route('attendance.detail', [
+									'attendance'   => $requestRow->attendance->id,
+									'from_request' => 1,
+									'request_id'   => $requestRow->id,
+									]) }}"
 								class="table-detail-link">
 								詳細
 							</a>
+
 							@else
 							-
 							@endif

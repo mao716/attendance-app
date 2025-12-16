@@ -6,90 +6,104 @@ use App\Http\Controllers\Controller;
 use App\Models\AttendanceBreak;
 use App\Models\StampCorrectionRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class StampCorrectionRequestController extends Controller
 {
-	/**
-	 * 承認待ち一覧
-	 */
 	public function index(): View
 	{
-		$requests = StampCorrectionRequest::query()
+		$pendingRequests = StampCorrectionRequest::query()
 			->with(['attendance.user'])
 			->where('status', StampCorrectionRequest::STATUS_PENDING)
 			->orderByDesc('created_at')
 			->get();
 
-		return view('admin.stamp_correction_request.list', compact('requests'));
+		$approvedRequests = StampCorrectionRequest::query()
+			->with(['attendance.user'])
+			->where('status', StampCorrectionRequest::STATUS_APPROVED)
+			->orderByDesc('created_at')
+			->get();
+
+		return view(
+			'admin.stamp_correction_request.list',
+			compact('pendingRequests', 'approvedRequests')
+		);
 	}
 
 	/**
 	 * 申請詳細（承認ボタン付き）
 	 */
-	public function show(StampCorrectionRequest $stampCorrectionRequest): View
+	public function show(StampCorrectionRequest $request): View
 	{
+		$stampCorrectionRequest = $request;
+
 		$stampCorrectionRequest->load([
 			'attendance.user',
-			'correctionBreaks' => fn($q) => $q->orderBy('break_order'),
+			'correctionBreaks' => function ($query) {
+				$query->orderBy('break_order');
+			},
 		]);
 
-		return view(
-			'admin.stamp_correction_request.show',
-			compact('stampCorrectionRequest')
-		);
+		if (! $stampCorrectionRequest->attendance) {
+			abort(404);
+		}
+
+		$isApproved = $stampCorrectionRequest->status === StampCorrectionRequest::STATUS_APPROVED;
+
+		return view('admin.stamp_correction_request.show', compact('stampCorrectionRequest', 'isApproved'));
 	}
 
 	/**
 	 * 承認処理
-	 * - stamp_correction_requests: status=APPROVED, approved_at を入れる
-	 * - attendances: clock_in/out, total_break_minutes, working_minutes を after_* で更新
-	 * - attendance_breaks: いったん全削除→修正後休憩で作り直す（おすすめ）
 	 */
-	public function approve(StampCorrectionRequest $stampCorrectionRequest): RedirectResponse
+	public function approve(StampCorrectionRequest $request): RedirectResponse
 	{
+		$stampCorrectionRequest = $request;
+
 		if ($stampCorrectionRequest->status !== StampCorrectionRequest::STATUS_PENDING) {
 			return back()->withErrors(['request' => 'この申請は承認待ちではありません。']);
 		}
 
-		$attendance = $stampCorrectionRequest->attendance()->with('breaks')->firstOrFail();
+		DB::transaction(function () use ($stampCorrectionRequest) {
+			$attendance = $stampCorrectionRequest->attendance()->firstOrFail();
 
-		// ① 勤怠（attendances）を after_* で更新
-		$attendance->clock_in_at = $stampCorrectionRequest->after_clock_in_at;
-		$attendance->clock_out_at = $stampCorrectionRequest->after_clock_out_at;
-		$attendance->total_break_minutes = $stampCorrectionRequest->after_break_minutes;
+			// ① 勤怠を after_* で更新
+			$attendance->clock_in_at = $stampCorrectionRequest->after_clock_in_at;
+			$attendance->clock_out_at = $stampCorrectionRequest->after_clock_out_at;
+			$attendance->total_break_minutes = (int) $stampCorrectionRequest->after_break_minutes;
 
-		// working_minutes = (出勤〜退勤) - 休憩
-		if ($attendance->clock_in_at && $attendance->clock_out_at) {
-			$attendance->working_minutes =
-				$attendance->clock_in_at->diffInMinutes($attendance->clock_out_at)
-				- (int) $attendance->total_break_minutes;
-		}
+			if ($attendance->clock_in_at && $attendance->clock_out_at) {
+				$working = $attendance->clock_in_at->diffInMinutes($attendance->clock_out_at)
+					- $attendance->total_break_minutes;
+				$attendance->working_minutes = max(0, (int) $working);
+			}
 
-		$attendance->save();
+			$attendance->save();
 
-		// ② 休憩（attendance_breaks）を作り直す
-		//    ※「承認後の勤怠は最新状態だけ持てばOK」ならこれが一番シンプルで事故りにくい
-		AttendanceBreak::where('attendance_id', $attendance->id)->delete();
+			// ② 休憩を作り直す
+			AttendanceBreak::where('attendance_id', $attendance->id)->delete();
 
-		$breaks = $stampCorrectionRequest->correctionBreaks()
-			->orderBy('break_order')
-			->get();
+			$breaks = $stampCorrectionRequest->correctionBreaks()
+				->orderBy('break_order')
+				->get();
 
-		foreach ($breaks as $b) {
-			AttendanceBreak::create([
-				'attendance_id'   => $attendance->id,
-				'break_start_at'  => $b->break_start_at,
-				'break_end_at'    => $b->break_end_at,
-			]);
-		}
+			foreach ($breaks as $break) {
+				AttendanceBreak::create([
+					'attendance_id'  => $attendance->id,
+					'break_start_at' => $break->break_start_at,
+					'break_end_at'   => $break->break_end_at,
+				]);
+			}
 
-		// ③ 申請を承認済みに
-		$stampCorrectionRequest->status = StampCorrectionRequest::STATUS_APPROVED;
-		$stampCorrectionRequest->approved_at = now();
-		$stampCorrectionRequest->save();
+			// ③ 申請を承認済みに
+			$stampCorrectionRequest->status = StampCorrectionRequest::STATUS_APPROVED;
+			$stampCorrectionRequest->approved_at = now();
+			$stampCorrectionRequest->save();
+		});
 
-		return redirect()->route('admin.stamp_corrections.index')
-			->with('status', '承認しました。');
+		// ✅ ここがルート名の修正ポイント
+		return redirect()
+			->route('admin.stamp_correction_request.index');
 	}
 }

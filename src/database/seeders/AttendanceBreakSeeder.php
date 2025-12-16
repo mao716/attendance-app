@@ -14,7 +14,6 @@ class AttendanceBreakSeeder extends Seeder
 		$attendances = Attendance::all();
 
 		foreach ($attendances as $attendance) {
-			// 出勤 or 退勤が入ってないレコードはスキップ（保険）
 			if (empty($attendance->clock_in_at) || empty($attendance->clock_out_at)) {
 				continue;
 			}
@@ -22,34 +21,43 @@ class AttendanceBreakSeeder extends Seeder
 			$clockIn  = Carbon::parse($attendance->clock_in_at);
 			$clockOut = Carbon::parse($attendance->clock_out_at);
 
-			// 1日の労働時間（分）
 			$workMinutes = $clockIn->diffInMinutes($clockOut);
-
-			// 労働時間が短すぎる日は休憩を作らない（3時間未満とか）
-			if ($workMinutes < 180) {
+			if ($workMinutes <= 0) {
 				continue;
 			}
 
-			// この日の休憩回数（0〜3回）
-			$breakCount = rand(0, 3);
+			$totalBreak = (int) ($attendance->total_break_minutes ?? 0);
 
-			for ($i = 0; $i < $breakCount; $i++) {
-				// 1回の休憩時間（10〜60分）
-				$breakDuration = rand(10, 60);
+			// 合計休憩が0なら明細も作らない
+			if ($totalBreak <= 0) {
+				continue;
+			}
 
-				// 休憩開始を置ける最大のオフセット（分）
-				$maxOffset = $workMinutes - $breakDuration;
-				if ($maxOffset <= 0) {
-					continue;
-				}
+			// 勤務時間を超える休憩はあり得ないので保険
+			if ($totalBreak >= $workMinutes) {
+				$totalBreak = max(0, $workMinutes - 1);
+			}
+			if ($totalBreak === 0) {
+				continue;
+			}
 
-				// 出勤から何分後に休憩を開始するか
-				$offsetMinutes = rand(0, $maxOffset);
+			// 休憩回数：1〜3回（合計が小さいなら1回）
+			$breakCount = ($totalBreak < 20) ? 1 : rand(1, 3);
 
-				$breakStart = $clockIn->copy()->addMinutes($offsetMinutes);
-				$breakEnd   = $breakStart->copy()->addMinutes($breakDuration);
+			// 合計$totalBreakを$breakCount個に分割（各1分以上）
+			$durations = $this->splitMinutes($totalBreak, $breakCount);
 
-				// 念のため退勤時間を越えないようクリップ
+			// 休憩同士が重ならないように「順に置く」
+			// まず開始位置の余白（勤務時間 - 合計休憩）
+			$freeMinutes = $workMinutes - array_sum($durations);
+			$startOffset = rand(0, max(0, $freeMinutes));
+
+			$cursor = $clockIn->copy()->addMinutes($startOffset);
+
+			foreach ($durations as $duration) {
+				$breakStart = $cursor->copy();
+				$breakEnd   = $breakStart->copy()->addMinutes($duration);
+
 				if ($breakEnd->greaterThan($clockOut)) {
 					$breakEnd = $clockOut->copy();
 				}
@@ -59,7 +67,38 @@ class AttendanceBreakSeeder extends Seeder
 					'break_start_at' => $breakStart,
 					'break_end_at'   => $breakEnd,
 				]);
+
+				// 次の休憩までの間隔（0〜60分）
+				$gap = rand(0, 60);
+				$cursor = $breakEnd->copy()->addMinutes($gap);
+
+				// はみ出し保険（次が置けないなら終了）
+				if ($cursor->greaterThanOrEqualTo($clockOut)) {
+					break;
+				}
 			}
 		}
+	}
+
+	private function splitMinutes(int $minutes, int $count): array
+	{
+		if ($count <= 1) {
+			return [$minutes];
+		}
+
+		// 最低1分ずつ確保
+		$remaining = $minutes - $count;
+		$parts = array_fill(0, $count, 1);
+
+		for ($i = 0; $i < $count; $i++) {
+			if ($remaining <= 0) break;
+
+			$add = ($i === $count - 1) ? $remaining : rand(0, $remaining);
+			$parts[$i] += $add;
+			$remaining -= $add;
+		}
+
+		shuffle($parts);
+		return $parts;
 	}
 }

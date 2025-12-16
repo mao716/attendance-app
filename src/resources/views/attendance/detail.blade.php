@@ -158,15 +158,9 @@ $canEdit = $isEditable && !$requestStatus;
 					<div class="cell cell-label">備考</div>
 					<div class="cell cell-full">
 						@if ($canEdit)
-						<div class="attendance-detail-note-wrap">
-							<textarea
-								name="reason"
-								class="attendance-detail-textarea">{{ old('reason', $note) }}</textarea>
-						</div>
+						<textarea name="reason" class="attendance-detail-textarea">{{ old('reason', $noteForForm) }}</textarea>
 						@else
-						<p class="attendance-detail-note-text">
-							{{ $note }}
-						</p>
+						<p class="attendance-detail-note-text">{{ $noteForDisplay }}</p>
 						@endif
 					</div>
 				</div>
