@@ -71,25 +71,48 @@ class StampCorrectionRequestController extends Controller
 			$afterClockOutAt = $beforeClockOutAt;
 		}
 
-		// ---- after（休憩 明細保存のため入力取得） ----
+		// ---- after（休憩：入力を正規化して保存対象だけ作る） ----
 		$breakInputs = $validated['breaks'] ?? [];
-		$hasAnyBreakInput = collect($breakInputs)->contains(function ($row) {
-			return !empty($row['start']) || !empty($row['end']);
-		});
 
-		// 合計休憩時間をまず計算
+		$normalizedBreaks = [];   // ← 保存する休憩だけ入れる
 		$afterBreakMinutes = 0;
 
-		if ($hasAnyBreakInput) {
-			foreach ($breakInputs as $row) {
-				if (!empty($row['start']) && !empty($row['end'])) {
-					$startAt = Carbon::parse("$workDate {$row['start']}");
-					$endAt   = Carbon::parse("$workDate {$row['end']}");
-					$afterBreakMinutes += $startAt->diffInMinutes($endAt);
-				}
+		foreach ($breakInputs as $row) {
+			$startStr = $row['start'] ?? null;
+			$endStr   = $row['end'] ?? null;
+
+			// ★ 両方空（--:--～--:--）＝削除扱い：保存しない
+			if (empty($startStr) && empty($endStr)) {
+				continue;
 			}
-		} else {
+
+			// ★ 片方だけ入力は FormRequest で弾く想定（ここでは安全側でスキップせず処理）
+			if (empty($startStr) || empty($endStr)) {
+				// ここに来るならバリデーション漏れなので保険でエラーにしてもOK
+				// throw new \RuntimeException('Invalid break input');
+				continue;
+			}
+
+			$startAt = Carbon::parse("$workDate $startStr");
+			$endAt   = Carbon::parse("$workDate $endStr");
+
+			$afterBreakMinutes += $startAt->diffInMinutes($endAt);
+
+			$normalizedBreaks[] = [
+				'start_at' => $startAt,
+				'end_at'   => $endAt,
+			];
+		}
+
+		// ★ 休憩を「一切入力してない」場合は、現状維持にしたいならこうする
+		// （＝休憩欄を触ってない時に既存休憩を消さないため）
+		$hasAnyBreakTouched = collect($breakInputs)->contains(
+			fn($row) => !empty($row['start']) || !empty($row['end'])
+		);
+
+		if (!$hasAnyBreakTouched) {
 			$afterBreakMinutes = $beforeBreakMinutes;
+			$normalizedBreaks = []; // 保存しない（＝申請側の休憩は「なし」扱いになる）
 		}
 
 		// ---- 多重申請防止（pending がある時） ----
@@ -115,19 +138,16 @@ class StampCorrectionRequestController extends Controller
 			'status'               => StampCorrectionRequest::STATUS_PENDING,
 		]);
 
-		// ---- 修正後の休憩を子テーブルへ保存 ----
-		if ($hasAnyBreakInput) {
+		// ---- 修正後の休憩を子テーブルへ保存（保存対象だけ） ----
+		if (!empty($normalizedBreaks)) {
 			$order = 1;
 
-			foreach ($breakInputs as $row) {
-				if (!empty($row['start']) && !empty($row['end'])) {
-					$requestRecord->correctionBreaks()->create([
-						'break_order'    => $order,
-						'break_start_at' => Carbon::parse("$workDate {$row['start']}"),
-						'break_end_at'   => Carbon::parse("$workDate {$row['end']}"),
-					]);
-					$order++;
-				}
+			foreach ($normalizedBreaks as $break) {
+				$requestRecord->correctionBreaks()->create([
+					'break_order'    => $order++,
+					'break_start_at' => $break['start_at'],
+					'break_end_at'   => $break['end_at'],
+				]);
 			}
 		}
 

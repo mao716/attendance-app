@@ -12,21 +12,14 @@ class AttendanceListController extends Controller
 {
 	public function index(Request $request)
 	{
-		// ?month=2025-12 の形式（なければ今月）
+		// ?month=YYYY-MM（なければ今月）
 		$monthParam = $request->query('month');
 
-		try {
-			$targetMonth = $monthParam
-				? Carbon::createFromFormat('Y-m', $monthParam)->startOfMonth()
-				: Carbon::now()->startOfMonth();
-		} catch (\Exception $exception) {
-			$targetMonth = Carbon::now()->startOfMonth();
-		}
+		$targetMonth = $this->resolveTargetMonth($monthParam);
 
 		$year  = $targetMonth->year;
 		$month = $targetMonth->month;
 
-		// その月の勤怠（一覧は「勤怠の最新＝attendances」を表示するだけでOK）
 		$attendances = Attendance::query()
 			->where('user_id', Auth::id())
 			->whereYear('work_date', $year)
@@ -34,7 +27,6 @@ class AttendanceListController extends Controller
 			->orderBy('work_date')
 			->get();
 
-		// 日付で引けるようにする（1ユーザー1日1レコード前提）
 		$attendancesByDate = $attendances->keyBy(function (Attendance $attendance) {
 			return $attendance->work_date->toDateString();
 		});
@@ -44,8 +36,8 @@ class AttendanceListController extends Controller
 		$rows = [];
 		$daysInMonth = $targetMonth->daysInMonth;
 
-		for ($dayIndex = 0; $dayIndex < $daysInMonth; $dayIndex++) {
-			$date = $targetMonth->copy()->addDays($dayIndex);
+		for ($dayOffset = 0; $dayOffset < $daysInMonth; $dayOffset++) {
+			$date = $targetMonth->copy()->addDays($dayOffset);
 			$dateKey = $date->toDateString();
 
 			/** @var Attendance|null $attendance */
@@ -70,5 +62,16 @@ class AttendanceListController extends Controller
 			'prevMonthParam' => $targetMonth->copy()->subMonth()->format('Y-m'),
 			'nextMonthParam' => $targetMonth->copy()->addMonth()->format('Y-m'),
 		]);
+	}
+
+	private function resolveTargetMonth(?string $monthParam): Carbon
+	{
+		try {
+			return $monthParam
+				? Carbon::createFromFormat('Y-m', $monthParam)->startOfMonth()
+				: now()->startOfMonth();
+		} catch (\Throwable $exception) {
+			return now()->startOfMonth();
+		}
 	}
 }

@@ -68,20 +68,12 @@ class StampCorrectionRequestController extends Controller
 		DB::transaction(function () use ($stampCorrectionRequest) {
 			$attendance = $stampCorrectionRequest->attendance()->firstOrFail();
 
-			// ① 勤怠を after_* で更新
-			$attendance->clock_in_at = $stampCorrectionRequest->after_clock_in_at;
+			// ① 勤怠（出退勤）を after_* で更新（休憩合計は後で再計算するのでここでは触らない）
+			$attendance->clock_in_at  = $stampCorrectionRequest->after_clock_in_at;
 			$attendance->clock_out_at = $stampCorrectionRequest->after_clock_out_at;
-			$attendance->total_break_minutes = (int) $stampCorrectionRequest->after_break_minutes;
-
-			if ($attendance->clock_in_at && $attendance->clock_out_at) {
-				$working = $attendance->clock_in_at->diffInMinutes($attendance->clock_out_at)
-					- $attendance->total_break_minutes;
-				$attendance->working_minutes = max(0, (int) $working);
-			}
-
 			$attendance->save();
 
-			// ② 休憩を作り直す
+			// ② 休憩明細を作り直す（申請の correctionBreaks を反映）
 			AttendanceBreak::where('attendance_id', $attendance->id)->delete();
 
 			$breaks = $stampCorrectionRequest->correctionBreaks()
@@ -96,14 +88,31 @@ class StampCorrectionRequestController extends Controller
 				]);
 			}
 
-			// ③ 申請を承認済みに
+			// ③ 合計休憩を breaks から再計算（正＝明細）
+			$totalBreakMinutes = AttendanceBreak::where('attendance_id', $attendance->id)
+				->get()
+				->sum(fn($b) => $b->break_start_at->diffInMinutes($b->break_end_at));
+
+			$attendance->total_break_minutes = (int) $totalBreakMinutes;
+
+			// ④ 実働も再計算
+			if ($attendance->clock_in_at && $attendance->clock_out_at) {
+				$working = $attendance->clock_in_at->diffInMinutes($attendance->clock_out_at)
+					- $attendance->total_break_minutes;
+
+				$attendance->working_minutes = max(0, (int) $working);
+			} else {
+				$attendance->working_minutes = 0;
+			}
+
+			$attendance->save();
+
+			// ⑤ 申請を承認済みに
 			$stampCorrectionRequest->status = StampCorrectionRequest::STATUS_APPROVED;
 			$stampCorrectionRequest->approved_at = now();
 			$stampCorrectionRequest->save();
 		});
 
-		// ✅ ここがルート名の修正ポイント
-		return redirect()
-			->route('admin.stamp_correction_request.index');
+		return redirect()->route('admin.stamp_correction_request.index');
 	}
 }

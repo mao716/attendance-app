@@ -24,7 +24,7 @@
 
 				{{-- 申請一覧（修正申請一覧） --}}
 				<li class="site-nav-item">
-					<a href="{{ url('/admin/stamp_correction_requests') }}" class="site-nav-link">
+					<a href="{{ url('/admin/stamp_correction_request/list') }}" class="site-nav-link">
 						申請一覧
 					</a>
 				</li>
