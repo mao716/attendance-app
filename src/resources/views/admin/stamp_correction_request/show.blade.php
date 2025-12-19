@@ -7,6 +7,11 @@
 @endpush
 
 @section('content')
+
+@php
+$attendance = $stampCorrectionRequest->attendance;
+@endphp
+
 <div class="attendance-detail-page">
 	<div class="attendance-detail">
 		<h1 class="page-title">勤務詳細</h1>
@@ -27,13 +32,24 @@
 				<div class="cell cell-main3"></div>
 			</div>
 
-			{{-- 勤務日 --}}
+			{{-- 日付 --}}
 			<div class="attendance-detail-row attendance-detail-row-date">
 				<div class="cell cell-label">日付</div>
+
+				{{-- 年 --}}
 				<div class="cell cell-main1">
-					{{ optional($stampCorrectionRequest->attendance?->work_date)->format('Y-m-d') ?? '-' }}
+					<span class="attendance-detail-date-year">
+						{{ $attendance->work_date->format('Y年') }}
+					</span>
 				</div>
-				<div class="cell cell-main2"></div>
+
+				{{-- 月日 --}}
+				<div class="cell cell-main2">
+					<span class="attendance-detail-date-md">
+						{{ $attendance->work_date->format('n月j日') }}
+					</span>
+				</div>
+
 				<div class="cell cell-main3"></div>
 			</div>
 
@@ -58,18 +74,39 @@
 				</div>
 			</div>
 
-			{{-- 休憩合計 --}}
+			{{-- 休憩 --}}
+			@foreach ($breakRows as $index => $breakRow)
 			<div class="attendance-detail-row">
-				<div class="cell cell-label">休憩合計</div>
-				<div class="cell cell-main1 cell-full">
-					{{ $stampCorrectionRequest->after_break_minutes }} 分
+				<div class="cell cell-label">休憩{{ $index + 1 }}</div>
+
+				<div class="cell cell-main1">
+					<span class="attendance-detail-time">
+						{{ $breakRow['start'] ?? '-' }}
+					</span>
 				</div>
-				<div class="cell cell-main2"></div>
-				<div class="cell cell-main3"></div>
+
+				<div class="cell cell-main2">
+					<span class="attendance-detail-tilde">〜</span>
+				</div>
+
+				<div class="cell cell-main3">
+					<span class="attendance-detail-time">
+						{{ $breakRow['end'] ?? '-' }}
+					</span>
+				</div>
+			</div>
+			@endforeach
+
+			{{-- 備考（申請理由） --}}
+			<div class="attendance-detail-row">
+				<div class="cell cell-label">備考</div>
+				<div class="cell cell-full">
+					<p class="attendance-detail-note-text">
+						{{ $stampCorrectionRequest->reason ?? '-' }}
+					</p>
+				</div>
 			</div>
 
-			{{-- 休憩明細（必要ならここも行で増やす） --}}
-			{{-- とりあえずulのままでもOK。揃えたくなったらこの部分も row 形式にする --}}
 		</div>
 
 		<div class="attendance-detail-footer">

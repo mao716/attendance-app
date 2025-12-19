@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AttendanceCorrectionRequest;
 use App\Models\Attendance;
 use App\Models\StampCorrectionRequest;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class StampCorrectionRequestController extends Controller
 {
@@ -16,20 +18,21 @@ class StampCorrectionRequestController extends Controller
 	 * - 承認待ちタブ：自分の PENDING
 	 * - 承認済みタブ：自分の APPROVED
 	 */
-	public function indexForUser()
+	public function indexForUser(): View
 	{
 		$userId = Auth::id();
 
-		$pendingRequests = StampCorrectionRequest::with(['attendance', 'user'])
+		$pendingRequests = StampCorrectionRequest::query()
+			->with(['attendance.user', 'user'])
 			->where('user_id', $userId)
 			->where('status', StampCorrectionRequest::STATUS_PENDING)
 			->orderByDesc('created_at')
 			->get();
 
-		$approvedRequests = StampCorrectionRequest::with(['attendance', 'user'])
+		$approvedRequests = StampCorrectionRequest::query()
+			->with(['attendance.user', 'user'])
 			->where('user_id', $userId)
 			->where('status', StampCorrectionRequest::STATUS_APPROVED)
-			->orderByDesc('approved_at')
 			->orderByDesc('created_at')
 			->get();
 
@@ -42,7 +45,7 @@ class StampCorrectionRequestController extends Controller
 	/**
 	 * 勤怠詳細画面からの「修正」押下 → 修正申請を新規作成
 	 */
-	public function store(AttendanceCorrectionRequest $request, Attendance $attendance)
+	public function store(AttendanceCorrectionRequest $request, Attendance $attendance): RedirectResponse
 	{
 		// 自分以外の勤怠IDなら403
 		if ($attendance->user_id !== Auth::id()) {
@@ -57,7 +60,7 @@ class StampCorrectionRequestController extends Controller
 		// ---- before（元の値） ----
 		$beforeClockInAt    = $attendance->clock_in_at;
 		$beforeClockOutAt   = $attendance->clock_out_at;
-		$beforeBreakMinutes = $attendance->total_break_minutes;
+		$beforeBreakMinutes = (int) $attendance->total_break_minutes;
 
 		// ---- after（出勤・退勤） ----
 		$clockInStr  = $validated['clock_in_at']  ?? null;
@@ -74,22 +77,20 @@ class StampCorrectionRequestController extends Controller
 		// ---- after（休憩：入力を正規化して保存対象だけ作る） ----
 		$breakInputs = $validated['breaks'] ?? [];
 
-		$normalizedBreaks = [];   // ← 保存する休憩だけ入れる
+		$normalizedBreaks  = []; // 保存する休憩だけ
 		$afterBreakMinutes = 0;
 
-		foreach ($breakInputs as $row) {
-			$startStr = $row['start'] ?? null;
-			$endStr   = $row['end'] ?? null;
+		foreach ($breakInputs as $breakInput) {
+			$startStr = $breakInput['start'] ?? null;
+			$endStr   = $breakInput['end'] ?? null;
 
-			// ★ 両方空（--:--～--:--）＝削除扱い：保存しない
+			// 両方空（--:--～--:--）＝削除扱い：保存しない
 			if (empty($startStr) && empty($endStr)) {
 				continue;
 			}
 
-			// ★ 片方だけ入力は FormRequest で弾く想定（ここでは安全側でスキップせず処理）
+			// 片方だけ入力は FormRequest で弾く想定（保険）
 			if (empty($startStr) || empty($endStr)) {
-				// ここに来るならバリデーション漏れなので保険でエラーにしてもOK
-				// throw new \RuntimeException('Invalid break input');
 				continue;
 			}
 
@@ -104,15 +105,14 @@ class StampCorrectionRequestController extends Controller
 			];
 		}
 
-		// ★ 休憩を「一切入力してない」場合は、現状維持にしたいならこうする
-		// （＝休憩欄を触ってない時に既存休憩を消さないため）
+		// 休憩を「一切入力してない」場合は、現状維持
 		$hasAnyBreakTouched = collect($breakInputs)->contains(
-			fn($row) => !empty($row['start']) || !empty($row['end'])
+			fn($breakInput) => !empty($breakInput['start']) || !empty($breakInput['end'])
 		);
 
-		if (!$hasAnyBreakTouched) {
+		if (! $hasAnyBreakTouched) {
 			$afterBreakMinutes = $beforeBreakMinutes;
-			$normalizedBreaks = []; // 保存しない（＝申請側の休憩は「なし」扱いになる）
+			$normalizedBreaks  = []; // 申請側の休憩明細は「なし」
 		}
 
 		// ---- 多重申請防止（pending がある時） ----
@@ -139,7 +139,7 @@ class StampCorrectionRequestController extends Controller
 		]);
 
 		// ---- 修正後の休憩を子テーブルへ保存（保存対象だけ） ----
-		if (!empty($normalizedBreaks)) {
+		if (! empty($normalizedBreaks)) {
 			$order = 1;
 
 			foreach ($normalizedBreaks as $break) {
@@ -154,38 +154,51 @@ class StampCorrectionRequestController extends Controller
 		return redirect()->route('stamp_correction_request.user_index');
 	}
 
-	public function showForUser(StampCorrectionRequest $stampCorrectionRequest)
+	/**
+	 * 申請一覧から「詳細」 → 勤怠詳細（閲覧専用）へ
+	 */
+	public function showForUser(StampCorrectionRequest $stampCorrectionRequest): View
 	{
 		// 本人以外は403
 		if ($stampCorrectionRequest->user_id !== Auth::id()) {
 			abort(403);
 		}
 
-		// 勤怠・修正休憩をロード
+		// 勤怠・休憩・修正休憩をロード
 		$stampCorrectionRequest->load([
-			'attendance.breaks' => fn($q) => $q->orderBy('break_start_at'),
-			'correctionBreaks'  => fn($q) => $q->orderBy('break_order'),
+			'attendance.breaks' => fn($builder) => $builder->orderBy('break_start_at'),
+			'correctionBreaks'  => fn($builder) => $builder->orderBy('break_order'),
 		]);
 
 		$attendance = $stampCorrectionRequest->attendance;
 
-		// 申請一覧から来た詳細は「閲覧専用」にしたいので固定
+		// 変なデータ混入対策
+		if (! $attendance) {
+			abort(404);
+		}
+
+		// 申請一覧から来た詳細は「閲覧専用」
 		$requestStatus = $stampCorrectionRequest->status === StampCorrectionRequest::STATUS_PENDING
 			? 'pending'
 			: 'approved';
 
 		$isEditable = false;
 
+		// 表示する時間は「申請の after_*」
 		$clockInTime  = optional($stampCorrectionRequest->after_clock_in_at)->format('H:i');
 		$clockOutTime = optional($stampCorrectionRequest->after_clock_out_at)->format('H:i');
 
-		$breakRows = $stampCorrectionRequest->correctionBreaks
-			->sortBy('break_order')
-			->map(fn($b) => [
-				'start' => optional($b->break_start_at)->format('H:i'),
-				'end'   => optional($b->break_end_at)->format('H:i'),
-			])->values()->toArray();
+		// 休憩は「申請に明細があればそれ優先」、なければ「勤怠の休憩」
+		$breakSource = $stampCorrectionRequest->correctionBreaks->isNotEmpty()
+			? $stampCorrectionRequest->correctionBreaks->sortBy('break_order')
+			: $attendance->breaks->sortBy('break_start_at');
 
+		$breakRows = collect($breakSource)->map(fn($break) => [
+			'start' => optional($break->break_start_at)->format('H:i'),
+			'end'   => optional($break->break_end_at)->format('H:i'),
+		])->values()->toArray();
+
+		// 備考欄は「申請理由」を表示用に渡す（フォーム入力はなし）
 		$noteForDisplay = $stampCorrectionRequest->reason;
 		$noteForForm = null;
 

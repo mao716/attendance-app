@@ -27,13 +27,6 @@ $canEdit = $isEditable && !$requestStatus;
 		</div>
 		@endif
 
-		{{-- ▼ 多重申請エラーなど（Controller で withErrors(['request' => ...]) したやつ） --}}
-		@if ($errors->has('request'))
-		<p class="attendance-detail-message is-error">
-			{{ $errors->first('request') }}
-		</p>
-		@endif
-
 		<div class="attendance-detail-card">
 			@if ($canEdit)
 			<form
