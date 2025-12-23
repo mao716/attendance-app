@@ -111,7 +111,6 @@ $canEdit = $isEditable && !$requestStatus;
 					<div class="cell cell-label">
 						{{ $index === 0 ? '休憩' : '休憩' . ($index + 1) }}
 					</div>
-
 					<div class="cell cell-main1 time-block">
 						@if ($canEdit)
 						<input
@@ -125,11 +124,9 @@ $canEdit = $isEditable && !$requestStatus;
 						</span>
 						@endif
 					</div>
-
 					<div class="cell cell-main2">
 						<span class="attendance-detail-tilde">〜</span>
 					</div>
-
 					<div class="cell cell-main3 time-block">
 						@if ($canEdit)
 						<input

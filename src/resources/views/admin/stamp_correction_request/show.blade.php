@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', '勤務詳細')
+@section('title', '勤怠詳細')
 
 @push('css')
 <link rel="stylesheet" href="{{ asset('css/attendance-detail.css') }}">
@@ -14,7 +14,7 @@ $attendance = $stampCorrectionRequest->attendance;
 
 <div class="attendance-detail-page">
 	<div class="attendance-detail">
-		<h1 class="page-title">勤務詳細</h1>
+		<h1 class="page-title">勤怠詳細</h1>
 
 		{{-- 上部エラー --}}
 		@if ($errors->has('request'))
@@ -25,7 +25,7 @@ $attendance = $stampCorrectionRequest->attendance;
 			{{-- 名前 --}}
 			<div class="attendance-detail-row">
 				<div class="cell cell-label">名前</div>
-				<div class="cell cell-main1 cell-full name-value">
+				<div class="cell cell-main1 name-value">
 					{{ $stampCorrectionRequest->attendance?->user?->name ?? '-' }}
 				</div>
 				<div class="cell cell-main2"></div>
@@ -77,18 +77,17 @@ $attendance = $stampCorrectionRequest->attendance;
 			{{-- 休憩 --}}
 			@foreach ($breakRows as $index => $breakRow)
 			<div class="attendance-detail-row">
-				<div class="cell cell-label">休憩{{ $index + 1 }}</div>
-
+				<div class="cell cell-label">
+					{{ $index === 0 ? '休憩' : '休憩' . ($index + 1) }}
+				</div>
 				<div class="cell cell-main1">
 					<span class="attendance-detail-time">
 						{{ $breakRow['start'] ?? '-' }}
 					</span>
 				</div>
-
 				<div class="cell cell-main2">
 					<span class="attendance-detail-tilde">〜</span>
 				</div>
-
 				<div class="cell cell-main3">
 					<span class="attendance-detail-time">
 						{{ $breakRow['end'] ?? '-' }}

@@ -23,6 +23,7 @@ class StampCorrectionRequestController extends Controller
 		$approvedRequests = StampCorrectionRequest::query()
 			->with(['attendance.user'])
 			->where('status', StampCorrectionRequest::STATUS_APPROVED)
+			->orderByDesc('approved_at')
 			->orderByDesc('created_at')
 			->get();
 
