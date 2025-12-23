@@ -187,24 +187,3 @@ $canEdit = $isEditable && !$requestStatus;
 	</div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-	document.addEventListener('DOMContentLoaded', () => {
-		const textarea = document.querySelector('.attendance-detail-textarea');
-		if (!textarea) return;
-
-		// 常にカーソルを先頭へ
-		textarea.addEventListener('focus', () => {
-			textarea.setSelectionRange(0, 0);
-		});
-
-		// クリック位置でキャレットが動かないようにする
-		textarea.addEventListener('mousedown', (e) => {
-			e.preventDefault();
-			textarea.focus();
-			textarea.setSelectionRange(0, 0);
-		});
-	});
-</script>
-@endpush
