@@ -61,7 +61,6 @@ class AttendanceDetailController extends Controller
         |    - それ以外は attendance を表示（編集OK）
         */
 		$isPending  = $targetRequest && $targetRequest->status === StampCorrectionRequest::STATUS_PENDING;
-		$isApproved = $targetRequest && $targetRequest->status === StampCorrectionRequest::STATUS_APPROVED;
 
 		$useAfterData = false;
 		$isEditable   = true;
@@ -123,10 +122,14 @@ class AttendanceDetailController extends Controller
 
 		// 編集可能なら最低2行を確保
 		if ($isEditable) {
-			for ($i = count($breakRows); $i < 2; $i++) {
+			$currentCount = count($breakRows);
+			$targetCount = max($currentCount + 1, 2);
+
+			while (count($breakRows) < $targetCount) {
 				$breakRows[] = ['start' => null, 'end' => null];
 			}
 		}
+
 
 		/*
         |--------------------------------------------------------------------------
