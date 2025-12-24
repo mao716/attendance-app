@@ -3,27 +3,55 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\AdminLoginRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-	/**
-	 * 管理者ログイン画面（仮）
-	 * PG07 実装時に Blade を返すように変更する。
-	 */
-	public function showLoginForm()
+	public function showLoginForm(): View
 	{
-		return 'admin login placeholder';
+		return view('admin.auth.login');
 	}
 
-	/**
-	 * ログイン処理（仮）
-	 * これも PG07 で本物に書き換える。
-	 */
-	public function authenticate(Request $request)
+	public function authenticate(AdminLoginRequest $request): RedirectResponse
 	{
-		// とりあえず動くだけにしておく
-		return 'admin authenticate placeholder';
+		$credentials = $request->only('email', 'password');
+
+		// 認証失敗（メール or パス不一致）
+		if (! Auth::attempt($credentials)) {
+			return back()
+				->withErrors(['login_error' => 'ログイン情報が登録されていません'])
+				->withInput();
+		}
+
+		// セッション固定攻撃対策
+		$request->session()->regenerate();
+
+		// 管理者チェック（role !== 2 は弾く）
+		if ((int) Auth::user()->role !== 2) {
+			Auth::logout();
+
+			$request->session()->invalidate();
+			$request->session()->regenerateToken();
+
+			return back()
+				->withErrors(['login_error' => 'ログイン情報が登録されていません'])
+				->withInput();
+		}
+
+		// 管理者トップ（とりあえず申請一覧でOK）
+		return redirect()->route('admin.stamp_correction_request.index');
+	}
+
+	public function logout(): RedirectResponse
+	{
+		Auth::logout();
+
+		request()->session()->invalidate();
+		request()->session()->regenerateToken();
+
+		return redirect()->route('admin.attendance.list');
 	}
 }

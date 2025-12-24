@@ -30,14 +30,18 @@ Route::get('/', function () {
 // ----------------------------------------
 // 一般ユーザー認証（Fortify + 独自Controller）
 // ----------------------------------------
+// ※ GET /login は Fortify::loginView が担当
+// ※ GET /register は Fortify::registerView が担当
 
-// ログイン（POST） ※ GET /login は Fortify::loginView が担当
-Route::post('/login', [UserLoginController::class, 'login'])
-	->name('login');
+Route::middleware('guest')->group(function () {
+	// ログイン（POST）
+	Route::post('/login', [UserLoginController::class, 'login'])
+		->name('login');
 
-// 会員登録（POST） ※ GET /register は Fortify::registerView が担当
-Route::post('/register', [RegisterController::class, 'store'])
-	->name('register');
+	// 会員登録（POST）
+	Route::post('/register', [RegisterController::class, 'store'])
+		->name('register');
+});
 
 // ----------------------------------------
 // 一般ユーザー側（要ログイン）
@@ -61,7 +65,7 @@ Route::middleware(['auth'])->group(function () {
 	Route::get('/attendance/list', [AttendanceListController::class, 'index'])
 		->name('attendance.list');
 
-	// PG05 勤怠詳細 /attendance/detail/{id}
+	// PG05 勤怠詳細 /attendance/detail/{attendance}
 	Route::get('/attendance/detail/{attendance}', [AttendanceDetailController::class, 'show'])
 		->name('attendance.detail');
 
@@ -78,12 +82,14 @@ Route::middleware(['auth'])->group(function () {
 	)->name('stamp_correction_request.user_index');
 
 	// 申請詳細（ユーザー）
-	Route::get('/stamp-correction-request/{stampCorrectionRequest}', [UserStampCorrectionRequestController::class, 'showForUser'])
-		->name('stamp_correction_request.user_show');
+	Route::get(
+		'/stamp-correction-request/{stampCorrectionRequest}',
+		[UserStampCorrectionRequestController::class, 'showForUser']
+	)->name('stamp_correction_request.user_show');
 });
 
 // ----------------------------------------
-// 管理者側（仮）
+// 管理者側
 // ----------------------------------------
 Route::prefix('admin')->name('admin.')->group(function () {
 
@@ -93,24 +99,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 		Route::post('/login', [AdminLoginController::class, 'authenticate'])->name('login.perform');
 	});
 
-	// ★ 仮：ログインしてれば誰でも見れる（開発用）
-	Route::middleware(['auth'])->group(function () {
-		Route::get('/stamp_correction_request/list', [AdminStampCorrectionRequestController::class, 'index'])
-			->name('stamp_correction_request.index');
-
-		Route::get('/stamp_correction_request/approve/{request}', [AdminStampCorrectionRequestController::class, 'show'])
-			->name('stamp_correction_request.show');
-
-		Route::post('/stamp_correction_request/approve/{request}', [AdminStampCorrectionRequestController::class, 'approve'])
-			->name('stamp_correction_request.approve');
-	});
-});
-
-/*
-|--------------------------------------------------------------------------
-| 管理者ルート（本番想定）※ admin実装開始時に復活
-|--------------------------------------------------------------------------
-Route::prefix('admin')->name('admin.')->group(function () {
+	// 管理者ログイン後
 	Route::middleware(['auth', 'can:is-admin'])->group(function () {
 		Route::post('/logout', [AdminLoginController::class, 'logout'])->name('logout');
 
@@ -126,4 +115,3 @@ Route::prefix('admin')->name('admin.')->group(function () {
 		Route::post('/stamp_correction_request/approve/{request}', [AdminStampCorrectionRequestController::class, 'approve'])->name('stamp_correction_request.approve');
 	});
 });
-*/
