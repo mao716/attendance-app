@@ -63,8 +63,8 @@ $list = $isPendingTab ? $pendingRequests : $approvedRequests;
 					</tr>
 					@empty
 					<tr>
-						<td colspan="5">
-							{{ $isPendingTab ? '承認待ちの申請はありません' : '承認済みの申請はありません' }}
+						<td colspan="6">
+							{{ $isPendingTab ? '承認待ちの修正申請はありません。' : '承認済みの修正申請はありません。' }}
 						</td>
 					</tr>
 					@endforelse

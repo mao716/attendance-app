@@ -70,7 +70,7 @@ class AttendanceListController extends Controller
 			return $monthParam
 				? Carbon::createFromFormat('Y-m', $monthParam)->startOfMonth()
 				: now()->startOfMonth();
-		} catch (\Throwable $exception) {
+		} catch (\Throwable) {
 			return now()->startOfMonth();
 		}
 	}
