@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
 		// 管理者ユーザー
 		User::create([
 			'name' => '管理者ユーザー',
-			'email' => 'admin@example.com',
+			'email' => 'admin@coachtech.com',
 			'password' => Hash::make('password123'),
 			'role' => 2, // 管理者
 			'email_verified_at' => now(),
@@ -21,11 +21,12 @@ class UserSeeder extends Seeder
 
 		// 一般ユーザー5名
 		$generalUsers = [
-			['name' => '佐藤 花子',  'email' => 'user1@example.com'],
-			['name' => '鈴木 次郎',  'email' => 'user2@example.com'],
-			['name' => '高橋 美咲',  'email' => 'user3@example.com'],
-			['name' => '田中 大輝',  'email' => 'user4@example.com'],
-			['name' => '山本 莉子',  'email' => 'user5@example.com'],
+			['name' => '西 伶奈',  'email' => 'reina.n@coachtech.com'],
+			['name' => '山田 太郎',  'email' => 'taro.y@coachtech.com'],
+			['name' => '増田 一世',  'email' => 'issei.m@coachtech.com'],
+			['name' => '山本 敬吉',  'email' => 'keikichi.y@coachtech.com'],
+			['name' => '秋田 朋美',  'email' => 'tomomi.a@coachtech.com'],
+			['name' => '中西 教夫',  'email' => 'norio.n@coachtech.com'],
 		];
 
 		foreach ($generalUsers as $user) {

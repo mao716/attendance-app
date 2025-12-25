@@ -16,8 +16,8 @@ $isPendingTab = $tab === 'pending';
 $list = $isPendingTab ? $pendingRequests : $approvedRequests;
 @endphp
 
-<div class="request-list-page">
-	<div class="request-list">
+<div class="list-page">
+	<div class="list-page-container">
 		<h1 class="page-title">申請一覧</h1>
 
 		@if (session('status'))

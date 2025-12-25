@@ -89,6 +89,17 @@ body {
 	margin-left: 16px;
 }
 
+.list-page {
+	padding-top: 32px;
+	padding-bottom: 60px;
+}
+
+.list-page-container {
+	max-width: 840px;
+	margin: 0 auto;
+	padding: 0 40px;
+}
+
 .page-title {
 	font-size: 32px;
 	font-weight: 800;
@@ -127,7 +138,7 @@ body {
 	width: 100%;
 	border-collapse: collapse;
 	color: #616161;
-	font-size: 14px;
+	font-size: 15px;
 	font-weight: 700;
 	table-layout: fixed;
 	letter-spacing: 0.1em;
@@ -144,7 +155,6 @@ body {
 /* 見出し行 */
 .table thead th {
 	color: #616161;
-	font-size: 15px;
 	font-weight: 700;
 	border-bottom: 3px solid #d8d8d8;
 	letter-spacing: 0.1em;
@@ -162,14 +172,12 @@ body {
 	text-align: center;
 	white-space: nowrap;
 	color: #616161;
-	font-size: 15px;
 	font-weight: 700;
 	letter-spacing: 0.1em;
 }
 
 /* 詳細リンク（共通化） */
 .table-detail-link {
-	font-size: 15px;
 	color: #000;
 	text-decoration: none;
 }

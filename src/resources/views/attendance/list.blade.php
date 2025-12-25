@@ -7,8 +7,8 @@
 @endpush
 
 @section('content')
-<div class="attendance-list-page">
-	<div class="attendance-list">
+<div class="list-page">
+	<div class="list-page-container">
 		<h1 class="page-title">勤怠一覧</h1>
 
 		{{-- 月ナビ --}}
@@ -58,14 +58,14 @@
 				<tbody>
 					@foreach ($rows as $row)
 					<tr>
-						<td class="col-date">{{ $row['date_label'] }}</td>
-						<td class="col-time">{{ $row['clock_in'] }}</td>
-						<td class="col-time">{{ $row['clock_out'] }}</td>
-						<td class="col-time">{{ $formatMinutes($row['break_minutes']) }}</td>
-						<td class="col-time">{{ $formatMinutes($row['work_minutes']) }}</td>
-						<td class="col-detail">
+						<td class="table-col-date">{{ $row['date_label'] }}</td>
+						<td class="table-col-time">{{ $row['clock_in'] }}</td>
+						<td class="table-col-time">{{ $row['clock_out'] }}</td>
+						<td class="table-col-time">{{ $formatMinutes($row['break_minutes']) }}</td>
+						<td class="table-col-time">{{ $formatMinutes($row['work_minutes']) }}</td>
+						<td class="table-col-detail">
 							@if (!empty($row['attendance_id']))
-							<a href="{{ $row['attendance_id'] ? route('attendance.detail', $row['attendance_id']) : '#' }}">
+							<a class="table-detail-link" href="{{ $row['attendance_id'] ? route('attendance.detail', $row['attendance_id']) : '#' }}">
 								詳細
 							</a>
 							@endif
