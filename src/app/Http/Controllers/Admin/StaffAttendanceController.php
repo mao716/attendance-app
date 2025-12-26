@@ -30,7 +30,9 @@ class StaffAttendanceController extends Controller
 			->where('user_id', $user->id)
 			->whereBetween('work_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
 			->get()
-			->keyBy('work_date'); // 'YYYY-MM-DD' => Attendance
+			->keyBy(function (Attendance $attendance) {
+				return Carbon::parse($attendance->work_date)->toDateString();
+			});
 
 		// 全日付分の行を作る（勤怠がない日は空欄）
 		$rows = [];
