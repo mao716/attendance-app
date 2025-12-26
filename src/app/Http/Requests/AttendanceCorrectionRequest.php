@@ -14,16 +14,13 @@ class AttendanceCorrectionRequest extends FormRequest
 	public function rules(): array
 	{
 		return [
-			// 出勤・退勤（どちらか入力したら両方必須／H:i 形式）
 			'clock_in_at'  => ['nullable', 'date_format:H:i'],
 			'clock_out_at' => ['nullable', 'date_format:H:i'],
 
-			// 休憩（配列）
-			'breaks'           => ['array'],
-			'breaks.*.start'   => ['nullable', 'date_format:H:i'],
-			'breaks.*.end'     => ['nullable', 'date_format:H:i'],
+			'breaks'         => ['array'],
+			'breaks.*.start' => ['nullable', 'date_format:H:i'],
+			'breaks.*.end'   => ['nullable', 'date_format:H:i'],
 
-			// 備考
 			'reason' => ['required', 'string', 'max:255'],
 		];
 	}
@@ -31,14 +28,13 @@ class AttendanceCorrectionRequest extends FormRequest
 	public function messages(): array
 	{
 		return [
-			'clock_in_at.date_format'  => '出勤時間は「HH:MM」形式で入力してください',
-			'clock_out_at.date_format' => '退勤時間は「HH:MM」形式で入力してください',
-
-			'breaks.*.start.date_format' => '休憩開始時間は「HH:MM」形式で入力してください',
-			'breaks.*.end.date_format'   => '休憩終了時間は「HH:MM」形式で入力してください',
-
+			// 要件④だけは必須
 			'reason.required' => '備考を記入してください',
-			'reason.max'      => '備考は255文字以内で入力してください',
+
+			// ★要件外なので書かない
+			// 'clock_in_at.date_format' ...
+			// 'breaks.*.start.date_format' ...
+			// 'reason.max' ...
 		];
 	}
 
@@ -52,29 +48,26 @@ class AttendanceCorrectionRequest extends FormRequest
 				return;
 			}
 
-			// 元の勤怠時刻（DB）を基準として使う
 			$baseClockIn  = optional($attendance->clock_in_at)?->format('H:i');
 			$baseClockOut = optional($attendance->clock_out_at)?->format('H:i');
 
-			// 入力された値（空なら元の値で補完）
 			$inputClockIn  = $this->input('clock_in_at')  ?: $baseClockIn;
 			$inputClockOut = $this->input('clock_out_at') ?: $baseClockOut;
 
-			// どちらかだけ入力されているパターンを弾く
+			// 片方だけ入力 → 要件①でまとめて弾く
 			if ($this->filled('clock_in_at') xor $this->filled('clock_out_at')) {
 				$validator->errors()->add(
 					'clock_in_at',
-					'出勤時間と退勤時間は両方入力してください'
+					'出勤時間もしくは退勤時間が不適切な値です'
 				);
 				return;
 			}
 
-			// 両方そろっているときだけ時間の前後チェック
+			// 出勤・退勤の前後（要件①）
 			if ($inputClockIn && $inputClockOut) {
 				$inMinutes  = $this->toMinutes($inputClockIn);
 				$outMinutes = $this->toMinutes($inputClockOut);
 
-				// 出勤 >= 退勤 はNG（機能要件のメッセージ）
 				if ($inMinutes >= $outMinutes) {
 					$validator->errors()->add(
 						'clock_in_at',
@@ -83,39 +76,37 @@ class AttendanceCorrectionRequest extends FormRequest
 				}
 			}
 
-			// 休憩のバリデーション
-			$breaks = $this->input('breaks', []);
+			$breakRows = $this->input('breaks', []);
 
-			foreach ($breaks as $index => $break) {
-				$start = $break['start'] ?? null;
-				$end   = $break['end'] ?? null;
+			foreach ($breakRows as $index => $breakRow) {
+				$start = $breakRow['start'] ?? null;
+				$end   = $breakRow['end'] ?? null;
 
-				// どちらかだけ入力 → NG
+				// 片方だけ入力 → 要件②に寄せる（休憩が不適切）
 				if (($start && !$end) || (!$start && $end)) {
 					$validator->errors()->add(
 						"breaks.$index.start",
-						'休憩時間は開始と終了を両方入力してください'
+						'休憩時間が不適切な値です'
 					);
 					continue;
 				}
 
-				// 両方空ならスキップ
+				// 両方空（=休憩削除扱いの入力）ならスキップ
 				if (!$start && !$end) {
+					continue;
+				}
+
+				// 出勤・退勤がなければ休憩の前後関係は判定できないのでスキップ
+				if (!$inputClockIn || !$inputClockOut) {
 					continue;
 				}
 
 				$startMinutes = $this->toMinutes($start);
 				$endMinutes   = $this->toMinutes($end);
+				$inMinutes    = $this->toMinutes($inputClockIn);
+				$outMinutes   = $this->toMinutes($inputClockOut);
 
-				// 出勤・退勤がどちらか欠けていたら、ここでのチェックはできないのでスキップ
-				if (!$inputClockIn || !$inputClockOut) {
-					continue;
-				}
-
-				$inMinutes  = $this->toMinutes($inputClockIn);
-				$outMinutes = $this->toMinutes($inputClockOut);
-
-				// 休憩開始が出勤より前 or 退勤より後 → メッセージ2
+				// 要件②：休憩開始が出勤より前 or 退勤より後
 				if ($startMinutes < $inMinutes || $startMinutes > $outMinutes) {
 					$validator->errors()->add(
 						"breaks.$index.start",
@@ -123,11 +114,19 @@ class AttendanceCorrectionRequest extends FormRequest
 					);
 				}
 
-				// 休憩終了が退勤より後 / 開始より前or同じ → メッセージ3
-				if ($endMinutes > $outMinutes || $endMinutes <= $startMinutes) {
+				// 要件③：休憩終了が退勤より後
+				if ($endMinutes > $outMinutes) {
 					$validator->errors()->add(
 						"breaks.$index.end",
 						'休憩時間もしくは退勤時間が不適切な値です'
+					);
+				}
+
+				// 開始>=終了（要件文言指定なし → 要件②に寄せる）
+				if ($endMinutes <= $startMinutes) {
+					$validator->errors()->add(
+						"breaks.$index.end",
+						'休憩時間が不適切な値です'
 					);
 				}
 			}
@@ -137,7 +136,6 @@ class AttendanceCorrectionRequest extends FormRequest
 	private function toMinutes(string $time): int
 	{
 		[$h, $m] = explode(':', $time);
-
 		return ((int) $h) * 60 + (int) $m;
 	}
 }

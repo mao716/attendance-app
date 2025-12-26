@@ -1,3 +1,6 @@
+/* =========================================================
+   1) Page / Container
+========================================================= */
 .attendance-detail-page {
 	padding-top: 32px;
 	padding-bottom: 60px;
@@ -7,12 +10,15 @@
 	max-width: 840px;
 	margin: 0 auto;
 	padding: 0 40px;
+
 	--label-col-width: 300px;
 	--time-col-width: 100px;
 	--tilde-col-width: 40px;
 }
 
-/* ---- 白いカード ---- */
+/* =========================================================
+   2) Card
+========================================================= */
 .attendance-detail-card {
 	margin-top: 32px;
 	background: #fff;
@@ -20,7 +26,9 @@
 	overflow: hidden;
 }
 
-/* 1行：Gridレイアウト（ラベル / 左 / 〜 / 右） */
+/* =========================================================
+   3) Row (Grid)
+========================================================= */
 .attendance-detail-row {
 	display: grid;
 	grid-template-columns:
@@ -36,28 +44,40 @@
 	border-bottom: none;
 }
 
-/* 共通セル */
+/* 日付行 */
+.attendance-detail-row-date .cell-main1,
+.attendance-detail-row-date .cell-main2 {
+	justify-content: flex-start;
+	text-align: left;
+}
+
+.attendance-detail-date-md {
+	white-space: nowrap;
+}
+
+/* =========================================================
+   4) Cells
+========================================================= */
 .cell {
 	font-weight: 700;
 	letter-spacing: 0.1em;
 }
 
-/* ラベル列（1列目） */
 .cell-label {
 	grid-column: 1;
 	color: #616161;
 	padding-left: 16px;
 }
 
-/* 左側の値（2列目） */
 .cell-main1 {
 	grid-column: 2;
 	display: flex;
 	justify-content: flex-start;
 	align-items: center;
+	min-width: 0;
+	/* flex内の縮み対策 */
 }
 
-/* 区切り（3列目：〜） */
 .cell-main2 {
 	grid-column: 3;
 	display: flex;
@@ -65,41 +85,41 @@
 	align-items: center;
 }
 
-/* 右側の値（4列目） */
 .cell-main3 {
 	grid-column: 4;
 	display: flex;
 	justify-content: flex-end;
 	align-items: center;
+	min-width: 0;
+	/* flex内の縮み対策 */
 }
 
-/* 「名前」「備考」みたいに 2〜4列をまとめて使う用 */
 .cell-full {
 	grid-column: 2 / 5;
 }
 
-/* 名前の行：左揃え */
 .name-value {
 	justify-content: flex-start;
 	text-align: left;
 }
 
-/* 日付（年・月日）は左揃え（2カラム分） */
-.attendance-detail-row-date .cell-main1,
-.attendance-detail-row-date .cell-main2 {
-	justify-content: flex-start;
-	text-align: left;
+/* エラー行の本文を右側で横断 */
+.cell-error-full {
+	grid-column: 2 / 5;
 }
 
-/* 月日を改行させない */
-.attendance-detail-date-md {
-	white-space: nowrap;
+/* =========================================================
+   5) Fields (Input / Display)
+========================================================= */
+.time-block {
+	display: flex;
+	align-items: center;
 }
 
-/* 時刻 input */
+/* time input */
 .attendance-detail-input-time {
 	width: 100%;
-	max-width: 100%;
+	min-width: 0;
 	padding: 6px 8px;
 	border: 1px solid #dcdcdc;
 	border-radius: 4px;
@@ -116,36 +136,28 @@
 	display: none;
 }
 
-/* テキスト表示用（閲覧モードの時間） */
 .attendance-detail-time {
 	font-size: 14px;
 	color: #333;
 }
 
-/* 「〜」 */
 .attendance-detail-tilde {
 	font-size: 14px;
 	color: #333;
 }
 
-/* input／テキスト共通のブロック（row側のflexと揃えるだけ） */
-.time-block {
+/* 出勤/退勤の input を包む（幅100%にする） */
+.field-stack {
+	width: 100%;
+	min-width: 0;
 	display: flex;
-	align-items: center;
+	flex-direction: column;
+	gap: 6px;
 }
 
-/* ===== 備考 ===== */
-
-/* 備考全体を「左時間〜右時間」と同じ幅にする */
-.attendance-detail-note-wrap {
-	width: calc(var(--time-col-width) * 2 + var(--tilde-col-width));
-	margin: 0 auto;
-}
-
-/* テキストエリア本体はラッパーの中でいっぱいに広げる */
+/* 備考 */
 .attendance-detail-textarea {
 	width: 100%;
-	max-width: 100%;
 	min-height: 90px;
 	padding: 10px 12px;
 	border: 1px solid #dcdcdc;
@@ -156,50 +168,50 @@
 	box-sizing: border-box;
 }
 
-/* 備考の表示用（閲覧モード） */
 .attendance-detail-note-text {
 	font-size: 14px;
 	line-height: 1.6;
 	color: #333;
 }
 
-/* 上部のエラー一覧 */
-.attendance-detail-errors {
-	margin-top: 16px;
-	margin-bottom: 8px;
-	padding: 12px 16px;
-	background: #ffe5e5;
-	border-radius: 4px;
+/* =========================================================
+   6) Error Rows
+========================================================= */
+/* エラーがあるとき、入力行側の下線は消して「エラー行側に線」を移す */
+.attendance-detail-row.has-error {
+	padding-bottom: 6px;
+	border-bottom: none;
+	min-height: 56px;
 }
 
-.attendance-detail-errors-list {
+/* エラー文の行 */
+.attendance-detail-row-error {
+	padding-top: 2px;
+	padding-bottom: 16px;
+	border-bottom: 1px solid #e5e5e5;
+	min-height: auto;
+}
+
+.field-error-inline {
+	font-size: 12px;
+	color: #d00;
+	font-weight: 700;
+	line-height: 1.2;
 	margin: 0;
-	padding-left: 20px;
+	padding: 0;
+	letter-spacing: 0;
+	white-space: normal;
 }
 
-.attendance-detail-error-item {
-	font-size: 13px;
-	color: #ff4f4f;
-	font-weight: 700;
-	line-height: 1.6;
-}
-
-/* 多重申請エラー用メッセージ */
-.attendance-detail-message.is-error {
-	font-size: 13px;
-	color: #ff4f4f;
-	font-weight: 700;
-	margin-top: 12px;
-}
-
-/* フッター（修正ボタン / メッセージ / 承認済みバッジ） */
+/* =========================================================
+   7) Footer
+========================================================= */
 .attendance-detail-footer {
 	padding: 24px 0 40px;
 	display: flex;
 	justify-content: flex-end;
 }
 
-/* 修正ボタン */
 .attendance-detail-button {
 	display: inline-block;
 	min-width: 90px;
@@ -214,14 +226,12 @@
 	cursor: pointer;
 }
 
-/* 承認待ちメッセージ */
 .attendance-detail-message.is-pending {
 	font-size: 13px;
 	color: #ff4f4f;
 	font-weight: 700;
 }
 
-/* 承認済みバッジ */
 .attendance-detail-status-badge {
 	display: inline-block;
 	background: #777777;
@@ -233,12 +243,12 @@
 	letter-spacing: 0.1em;
 }
 
-/* ===== スマホ幅（〜767px）のレイアウト調整 ===== */
+/* =========================================================
+   8) Responsive
+========================================================= */
 @media (max-width: 767px) {
-
 	.attendance-detail {
 		padding: 0 16px;
-		/* グリッドの列幅を小さめに */
 		--label-col-width: 150px;
 		--time-col-width: 90px;
 		--tilde-col-width: 24px;
@@ -254,7 +264,6 @@
 		padding-left: 8px;
 	}
 
-	/* 備考テキストエリアも少し低めにしておく */
 	.attendance-detail-textarea {
 		min-height: 70px;
 	}

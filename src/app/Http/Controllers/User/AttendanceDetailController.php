@@ -120,16 +120,14 @@ class AttendanceDetailController extends Controller
 			])->values()->toArray();
 		}
 
-		// 編集可能なら最低2行を確保
+		// 編集可能なら「現在の休憩枠 + 1枠」を確保（追加入力用）
 		if ($isEditable) {
-			$currentCount = count($breakRows);
-			$targetCount = max($currentCount + 1, 2);
+			$targetRowCount = count($breakRows) + 1;
 
-			while (count($breakRows) < $targetCount) {
+			for ($index = count($breakRows); $index < $targetRowCount; $index++) {
 				$breakRows[] = ['start' => null, 'end' => null];
 			}
 		}
-
 
 		/*
         |--------------------------------------------------------------------------
