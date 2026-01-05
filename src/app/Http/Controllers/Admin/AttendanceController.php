@@ -258,6 +258,18 @@ class AttendanceController extends Controller
 			$attendance->status = Attendance::STATUS_FINISHED;
 
 			$attendance->save();
+
+			$latestApproved = StampCorrectionRequest::query()
+				->where('attendance_id', $attendance->id)
+				->where('status', StampCorrectionRequest::STATUS_APPROVED)
+				->orderByDesc('approved_at')
+				->orderByDesc('created_at')
+				->first();
+
+			if ($latestApproved) {
+				$latestApproved->reason = $request->input('reason'); // nullでもOKならそのまま
+				$latestApproved->save();
+			}
 		});
 
 		return redirect()
