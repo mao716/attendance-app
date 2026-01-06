@@ -114,17 +114,18 @@ docker compose exec php php artisan db:seed
 
 | メールアドレス        | パスワード     |
 |------------------------|----------------|
-| admin@example.com      | password123    |
+| admin@coachtech.com      | password123    |
 
 ### ▼ 一般ユーザー（5名）
 
 | 名前       | メールアドレス         | パスワード     |
 |------------|--------------------------|----------------|
-| 佐藤 花子  | user1@example.com        | password123    |
-| 鈴木 次郎  | user2@example.com        | password123    |
-| 高橋 美咲  | user3@example.com        | password123    |
-| 田中 大輝  | user4@example.com        | password123    |
-| 山本 莉子  | user5@example.com        | password123    |
+| 西 伶奈  | reina.n@coachtech.com        | password123    |
+| 山田 太郎  | taro.y@coachtech.com        | password123    |
+| 増田 一世  | issei.m@coachtech.com        | password123    |
+| 山本 敬吉  | keikichi.y@coachtech.com        | password123    |
+| 秋田 朋美  | tomomi.a@coachtech.com        | password123    |
+| 中西 教夫  | norio.n@coachtech.com        | password123    |
 
 ## 6. 画面一覧
 
