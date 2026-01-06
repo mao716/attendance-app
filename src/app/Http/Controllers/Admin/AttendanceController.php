@@ -54,7 +54,7 @@ class AttendanceController extends Controller
 			return $dateParam
 				? Carbon::createFromFormat('Y-m-d', $dateParam)->startOfDay()
 				: Carbon::today();
-		} catch (\Throwable $exception) {
+		} catch (\Throwable) {
 			return Carbon::today();
 		}
 	}
@@ -64,6 +64,9 @@ class AttendanceController extends Controller
 	 */
 	public function show(Request $request, Attendance $attendance): View
 	{
+		$fromRequest = $request->boolean('from_request');
+		$requestId   = $request->integer('request_id');
+
 		// 関連ロード（休憩は表示に必須）
 		$attendance->load([
 			'user',
@@ -72,103 +75,125 @@ class AttendanceController extends Controller
 
 		$user = $attendance->user;
 
-		// 最新申請（pending かどうか判定に使う）
-		$latestRequest = StampCorrectionRequest::query()
-			->where('attendance_id', $attendance->id)
-			->latest()
-			->first();
+		// --- 申請を「固定」するかどうか ---
+		$targetRequest = null;
 
-		$isPending = $latestRequest
-			&& $latestRequest->status === StampCorrectionRequest::STATUS_PENDING;
+		if ($fromRequest) {
+			if (!$requestId) {
+				abort(404);
+			}
+
+			// 承認済み一覧から来た場合：その申請を固定
+			$targetRequest = StampCorrectionRequest::query()
+				->where('id', $requestId)
+				->where('attendance_id', $attendance->id)
+				->with(['correctionBreaks' => fn($q) => $q->orderBy('break_order')])
+				->firstOrFail();
+		} else {
+			// 通常（勤怠一覧等）から来た場合：最新申請を見て pending 判定だけしたい
+			$targetRequest = StampCorrectionRequest::query()
+				->where('attendance_id', $attendance->id)
+				->with(['correctionBreaks' => fn($q) => $q->orderBy('break_order')])
+				->latest()
+				->first();
+		}
+
+		$isPending = $targetRequest
+			&& $targetRequest->status === StampCorrectionRequest::STATUS_PENDING;
 
 		/*
-		|------------------------------------------
-		| 表示モード決定（Admin）
-		|------------------------------------------
-		| - pending があれば after を表示（閲覧専用）
-		| - それ以外は attendance を表示（編集OK）
-		*/
-		$useAfterData  = $isPending;
-		$isEditable    = ! $isPending;
-		$requestStatus = $isPending ? 'pending' : null; // bladeの表示制御用
+    |------------------------------------------
+    | 表示モード決定（Admin）
+    |------------------------------------------
+    | - from_request=1 : その申請の after を必ず表示（閲覧専用）
+    | - from_request=0 :
+    |    - pending があれば after を表示（閲覧専用）
+    |    - それ以外は attendance を表示（編集OK）
+    */
+		$useAfterData = false;
+		$isEditable = true;
+		$requestStatus = null;
+
+		if ($fromRequest) {
+			$isEditable = false;
+			$useAfterData = true;
+			$requestStatus = $isPending ? 'pending' : 'approved';
+		} else {
+			if ($isPending) {
+				$isEditable = false;
+				$useAfterData = true;
+				$requestStatus = 'pending';
+			} else {
+				$isEditable = true;
+				$useAfterData = false;
+				$requestStatus = null;
+			}
+		}
 
 		/*
-		|------------------------------------------
-		| 出勤・退勤（表示）
-		|------------------------------------------
-		*/
+    |------------------------------------------
+    | 出勤・退勤（表示）
+    |------------------------------------------
+    */
 		$displayClockInAt  = $attendance->clock_in_at;
 		$displayClockOutAt = $attendance->clock_out_at;
 
-		if ($useAfterData && $latestRequest) {
-			$displayClockInAt  = $latestRequest->after_clock_in_at;
-			$displayClockOutAt = $latestRequest->after_clock_out_at;
+		if ($useAfterData && $targetRequest) {
+			$displayClockInAt  = $targetRequest->after_clock_in_at;
+			$displayClockOutAt = $targetRequest->after_clock_out_at;
 		}
 
 		$clockInTime  = optional($displayClockInAt)->format('H:i');
 		$clockOutTime = optional($displayClockOutAt)->format('H:i');
 
 		/*
-		|------------------------------------------
-		| 休憩（表示）
-		|------------------------------------------
-		| - after表示モードなら stamp_correction_breaks を優先
-		| - それ以外は attendance_breaks
-		*/
+    |------------------------------------------
+    | 休憩（表示）
+    |------------------------------------------
+    */
 		$breakRows = [];
 
-		if ($useAfterData && $latestRequest) {
-			$latestRequest->load([
-				'correctionBreaks' => fn($q) => $q->orderBy('break_order'),
-			]);
-
-			if ($latestRequest->correctionBreaks->isNotEmpty()) {
-				$breakRows = $latestRequest->correctionBreaks->map(fn($b) => [
-					'start' => optional($b->break_start_at)->format('H:i'),
-					'end'   => optional($b->break_end_at)->format('H:i'),
-				])->values()->toArray();
-			}
-		}
-
-		if (empty($breakRows)) {
+		if ($useAfterData && $targetRequest && $targetRequest->correctionBreaks->isNotEmpty()) {
+			$breakRows = $targetRequest->correctionBreaks->map(fn($b) => [
+				'start' => optional($b->break_start_at)->format('H:i'),
+				'end'   => optional($b->break_end_at)->format('H:i'),
+			])->values()->toArray();
+		} else {
 			$breakRows = $attendance->breaks->map(fn($b) => [
 				'start' => optional($b->break_start_at)->format('H:i'),
 				'end'   => optional($b->break_end_at)->format('H:i'),
 			])->values()->toArray();
 		}
 
-		// 編集可能なら「休憩枠 + 1枠」を確保（休憩0なら空欄1枠だけになる）
+		// 編集可能なら「休憩枠 + 1枠」
 		if ($isEditable) {
 			$targetRowCount = count($breakRows) + 1;
-
 			for ($i = count($breakRows); $i < $targetRowCount; $i++) {
 				$breakRows[] = ['start' => null, 'end' => null];
 			}
 		}
 
 		/*
-		|------------------------------------------
-		| 備考（表示/フォーム初期値）
-		|------------------------------------------
-		| - pending：pending の reason を表示（閲覧用）
-		| - editable：フォーム初期値は「最新 approved の reason」（User側と同じ仕様）
-		*/
+    |------------------------------------------
+    | 備考（表示/フォーム初期値）
+    |------------------------------------------
+    */
 		$noteForDisplay = null;
-		$noteForForm    = null;
+		$noteForForm = null;
 
-		if ($isPending && $latestRequest) {
-			$noteForDisplay = $latestRequest->reason;
-		}
+		if ($fromRequest && $targetRequest) {
+			// ★承認済み一覧→詳細：その申請の reason を固定表示（直接修正に影響されない）
+			$noteForDisplay = $targetRequest->reason;
+		} else {
+			if ($isPending && $targetRequest) {
+				// pending：申請の reason を表示
+				$noteForDisplay = $targetRequest->reason;
+			}
 
-		if ($isEditable) {
-			$latestApproved = StampCorrectionRequest::query()
-				->where('attendance_id', $attendance->id)
-				->where('status', StampCorrectionRequest::STATUS_APPROVED)
-				->orderByDesc('approved_at')
-				->orderByDesc('created_at')
-				->first();
-
-			$noteForForm = $latestApproved?->reason;
+			if ($isEditable) {
+				// ★直接修正の正本は attendances.note
+				$noteForForm = $attendance->note;
+			}
 		}
 
 		return view('admin.attendance.detail', [
@@ -181,6 +206,8 @@ class AttendanceController extends Controller
 			'noteForForm'    => $noteForForm,
 			'requestStatus'  => $requestStatus,
 			'isEditable'     => $isEditable,
+			'fromRequest'    => $fromRequest, // 必要なら
+			'requestId'      => $requestId,   // 必要なら
 		]);
 	}
 
@@ -227,10 +254,13 @@ class AttendanceController extends Controller
 			}
 		}
 
-		DB::transaction(function () use ($attendance, $clockInAt, $clockOutAt, $normalizedBreaks) {
+		DB::transaction(function () use($attendance, $clockInAt, $clockOutAt, $normalizedBreaks, $request) {
 			// attendances 更新
 			$attendance->clock_in_at = $clockInAt;
 			$attendance->clock_out_at = $clockOutAt;
+
+			// ★備考保存（フォームは reason なので note に入れる）
+			$attendance->note = $request->input('reason');
 
 			// breaks 作り直し
 			AttendanceBreak::query()
@@ -258,18 +288,6 @@ class AttendanceController extends Controller
 			$attendance->status = Attendance::STATUS_FINISHED;
 
 			$attendance->save();
-
-			$latestApproved = StampCorrectionRequest::query()
-				->where('attendance_id', $attendance->id)
-				->where('status', StampCorrectionRequest::STATUS_APPROVED)
-				->orderByDesc('approved_at')
-				->orderByDesc('created_at')
-				->first();
-
-			if ($latestApproved) {
-				$latestApproved->reason = $request->input('reason'); // nullでもOKならそのまま
-				$latestApproved->save();
-			}
 		});
 
 		return redirect()

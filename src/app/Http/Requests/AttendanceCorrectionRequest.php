@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class AttendanceCorrectionRequest extends FormRequest
 {
@@ -14,10 +15,10 @@ class AttendanceCorrectionRequest extends FormRequest
 	public function rules(): array
 	{
 		return [
-			'clock_in_at'  => ['nullable', 'date_format:H:i'],
-			'clock_out_at' => ['nullable', 'date_format:H:i'],
+			'clock_in_at'  => ['required', 'date_format:H:i'],
+			'clock_out_at' => ['required', 'date_format:H:i'],
 
-			'breaks'         => ['array'],
+			'breaks' => ['nullable', 'array'],
 			'breaks.*.start' => ['nullable', 'date_format:H:i'],
 			'breaks.*.end'   => ['nullable', 'date_format:H:i'],
 
@@ -28,106 +29,109 @@ class AttendanceCorrectionRequest extends FormRequest
 	public function messages(): array
 	{
 		return [
-			// 要件④だけは必須
-			'reason.required' => '備考を記入してください',
+			'clock_in_at.required'  => '出勤時間を入力してください',
+			'clock_out_at.required' => '退勤時間を入力してください',
 
-			// ★要件外なので書かない
-			// 'clock_in_at.date_format' ...
-			// 'breaks.*.start.date_format' ...
-			// 'reason.max' ...
+			'reason.required' => '備考を記入してください',
+			'reason.max'      => '備考は255文字以内で入力してください',
+
+			// date_format系は「指定メッセージが要る」なら追加してOK
+			// 'clock_in_at.date_format'  => '出勤時間もしくは退勤時間が不適切な値です',
+			// 'clock_out_at.date_format' => '出勤時間もしくは退勤時間が不適切な値です',
 		];
 	}
 
-	public function withValidator($validator): void
+	public function withValidator(Validator $validator): void
 	{
-		$validator->after(function ($validator) {
-			/** @var \App\Models\Attendance|null $attendance */
-			$attendance = $this->route('attendance');
+		$validator->after(function (Validator $validator) {
+			$clockIn  = $this->input('clock_in_at');
+			$clockOut = $this->input('clock_out_at');
 
-			if (!$attendance) {
-				return;
-			}
-
-			$baseClockIn  = optional($attendance->clock_in_at)?->format('H:i');
-			$baseClockOut = optional($attendance->clock_out_at)?->format('H:i');
-
-			$inputClockIn  = $this->input('clock_in_at')  ?: $baseClockIn;
-			$inputClockOut = $this->input('clock_out_at') ?: $baseClockOut;
-
-			// 片方だけ入力 → 要件①でまとめて弾く
-			if ($this->filled('clock_in_at') xor $this->filled('clock_out_at')) {
-				$validator->errors()->add(
-					'clock_in_at',
-					'出勤時間もしくは退勤時間が不適切な値です'
-				);
-				return;
-			}
-
-			// 出勤・退勤の前後（要件①）
-			if ($inputClockIn && $inputClockOut) {
-				$inMinutes  = $this->toMinutes($inputClockIn);
-				$outMinutes = $this->toMinutes($inputClockOut);
-
-				if ($inMinutes >= $outMinutes) {
-					$validator->errors()->add(
-						'clock_in_at',
-						'出勤時間もしくは退勤時間が不適切な値です'
-					);
-				}
+			// 出勤 >= 退勤
+			if ($clockIn && $clockOut && $this->toMinutes($clockIn) >= $this->toMinutes($clockOut)) {
+				$validator->errors()->add('clock_in_at', '出勤時間もしくは退勤時間が不適切な値です');
 			}
 
 			$breakRows = $this->input('breaks', []);
+			if (!is_array($breakRows)) {
+				return;
+			}
+
+			$inMinutes  = $clockIn  ? $this->toMinutes($clockIn)  : null;
+			$outMinutes = $clockOut ? $this->toMinutes($clockOut) : null;
 
 			foreach ($breakRows as $index => $breakRow) {
 				$start = $breakRow['start'] ?? null;
 				$end   = $breakRow['end'] ?? null;
 
-				// 片方だけ入力 → 要件②に寄せる（休憩が不適切）
-				if (($start && !$end) || (!$start && $end)) {
-					$validator->errors()->add(
-						"breaks.$index.start",
-						'休憩時間が不適切な値です'
-					);
-					continue;
-				}
-
-				// 両方空（=休憩削除扱いの入力）ならスキップ
+				// 両方空はOK（未入力枠）
 				if (!$start && !$end) {
 					continue;
 				}
 
-				// 出勤・退勤がなければ休憩の前後関係は判定できないのでスキップ
-				if (!$inputClockIn || !$inputClockOut) {
+				// 片方だけはNG
+				if (!$start || !$end) {
+					$validator->errors()->add("breaks.$index.start", '休憩時間が不適切な値です');
 					continue;
 				}
 
 				$startMinutes = $this->toMinutes($start);
 				$endMinutes   = $this->toMinutes($end);
-				$inMinutes    = $this->toMinutes($inputClockIn);
-				$outMinutes   = $this->toMinutes($inputClockOut);
 
-				// 要件②：休憩開始が出勤より前 or 退勤より後
-				if ($startMinutes < $inMinutes || $startMinutes > $outMinutes) {
-					$validator->errors()->add(
-						"breaks.$index.start",
-						'休憩時間が不適切な値です'
-					);
+				// 休憩開始 >= 休憩終了
+				if ($startMinutes >= $endMinutes) {
+					$validator->errors()->add("breaks.$index.start", '休憩時間が不適切な値です');
+					continue;
 				}
 
-				// 要件③：休憩終了が退勤より後
+				// 出退勤が揃ってる前提（required）だけど念のため
+				if ($inMinutes === null || $outMinutes === null) {
+					continue;
+				}
+
+				// 休憩開始が出勤より前 or 退勤より後
+				if ($startMinutes < $inMinutes || $startMinutes >= $outMinutes) {
+					$validator->errors()->add("breaks.$index.start", '休憩時間が不適切な値です');
+				}
+
+				// 休憩終了が退勤より後
 				if ($endMinutes > $outMinutes) {
-					$validator->errors()->add(
-						"breaks.$index.end",
-						'休憩時間もしくは退勤時間が不適切な値です'
-					);
+					$validator->errors()->add("breaks.$index.end", '休憩時間もしくは退勤時間が不適切な値です');
+				}
+			}
+
+			// --- 重なりチェック（start順にして end > nextStart ならNG）---
+			// 有効な休憩だけ集める（両方入ってる行）
+			$normalized = [];
+
+			foreach ($breakRows as $index => $breakRow) {
+				$start = $breakRow['start'] ?? null;
+				$end   = $breakRow['end'] ?? null;
+
+				// 両方入力されてる行だけ（片方だけは別で弾いてる前提）
+				if (!$start || !$end) {
+					continue;
 				}
 
-				// 開始>=終了（要件文言指定なし → 要件②に寄せる）
-				if ($endMinutes <= $startMinutes) {
+				$normalized[] = [
+					'index' => $index,
+					'start' => $this->toMinutes($start),
+					'end'   => $this->toMinutes($end),
+				];
+			}
+
+			// start昇順
+			usort($normalized, fn($a, $b) => $a['start'] <=> $b['start']);
+
+			// 隣同士で比較（end > nextStart なら重なり）
+			for ($i = 0; $i < count($normalized) - 1; $i++) {
+				if ($normalized[$i]['end'] > $normalized[$i + 1]['start']) {
+					// 表示する行は「重なりを起こしてる側」のindexに付けるのが分かりやすい
 					$validator->errors()->add(
-						"breaks.$index.end",
+						"breaks.{$normalized[$i]['index']}.start",
 						'休憩時間が不適切な値です'
 					);
+					break;
 				}
 			}
 		});

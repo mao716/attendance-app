@@ -12,32 +12,29 @@ return new class extends Migration
     public function up(): void
     {
 		Schema::create('attendances', function (Blueprint $table) {
-			$table->id(); // unsigned bigint, PK
+			$table->id();
 
-			// usersテーブルへのFK
-			$table->foreignId('user_id')
-				->constrained('users'); // users(id) への外部キー
+			$table->foreignId('user_id')->constrained('users');
+			$table->date('work_date');
 
-			// 1ユーザー1日1レコード
-			$table->date('work_date'); // NOT NULL
-
-			// 打刻時刻（NULL許可）
 			$table->dateTime('clock_in_at')->nullable();
 			$table->dateTime('clock_out_at')->nullable();
 
-			// 分単位の集計値
-			$table->integer('total_break_minutes'); // 休憩合計（分）
-			$table->integer('working_minutes');     // 実働時間（分）
+			// 集計系は default(0) 推奨（NOT NULLのまま運用しやすい）
+			$table->integer('total_break_minutes')->default(0);
+			$table->integer('working_minutes')->default(0);
 
-			// 勤務ステータス（例：0=勤務外,1=出勤中…などは後で定数化）
-			$table->tinyInteger('status');
+			// 勤務ステータス
+			$table->tinyInteger('status')->default(0);
 
-			$table->timestamps(); // created_at / updated_at
+			// ★備考（勤怠に直接保存する場所）
+			$table->string('note', 255)->nullable();
 
-			// (user_id, work_date) の組み合わせで一意
+			$table->timestamps();
+
 			$table->unique(['user_id', 'work_date']);
 		});
-    }
+	}
 
     /**
      * Reverse the migrations.

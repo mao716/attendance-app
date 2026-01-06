@@ -16,6 +16,18 @@ $canEdit = $isEditable && $requestStatus !== 'pending';
 	<div class="attendance-detail">
 		<h1 class="page-title">勤怠詳細</h1>
 
+		@if (session('success'))
+		<div class="flash-message is-success">
+			{{ session('success') }}
+		</div>
+		@endif
+
+		@if (session('error'))
+		<div class="flash-message is-error">
+			{{ session('error') }}
+		</div>
+		@endif
+
 		<div class="attendance-detail-card">
 
 			<form
@@ -146,7 +158,7 @@ $canEdit = $isEditable && $requestStatus !== 'pending';
 					<div class="cell cell-label"></div>
 					<div class="cell cell-error-full">
 						<p class="field-error-inline">
-							{{ $errors->first("breaks.$index.start") ?? $errors->first("breaks.$index.end") }}
+							{{ $errors->first("breaks.$index.end") ?: $errors->first("breaks.$index.start") }}
 						</p>
 					</div>
 				</div>

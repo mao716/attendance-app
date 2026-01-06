@@ -149,15 +149,8 @@ class AttendanceDetailController extends Controller
 			}
 
 			if ($isEditable) {
-				$latestApproved = StampCorrectionRequest::query()
-					->where('attendance_id', $attendance->id)
-					->where('user_id', Auth::id())
-					->where('status', StampCorrectionRequest::STATUS_APPROVED)
-					->orderByDesc('approved_at')
-					->orderByDesc('created_at')
-					->first();
-
-				$noteForForm = $latestApproved?->reason;
+				// 直接修正／次回申請の初期値は attendances.note
+				$noteForForm = $attendance->note;
 			}
 		}
 

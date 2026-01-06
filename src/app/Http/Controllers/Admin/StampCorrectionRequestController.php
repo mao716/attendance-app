@@ -81,19 +81,14 @@ class StampCorrectionRequestController extends Controller
 		}
 
 		DB::transaction(function () use ($stampCorrectionRequest) {
-
 			$stampCorrectionRequest->load([
-				'attendance.breaks' => function ($builder) {
-					$builder->orderBy('break_start_at');
-				},
-				'correctionBreaks' => function ($builder) {
-					$builder->orderBy('break_order');
-				},
+				'attendance.breaks' => fn($builder) => $builder->orderBy('break_start_at'),
+				'correctionBreaks' => fn($builder) => $builder->orderBy('break_order'),
 			]);
 
 			$attendance = $stampCorrectionRequest->attendance;
 
-			if (! $attendance) {
+			if (!$attendance) {
 				abort(404);
 			}
 
@@ -108,11 +103,9 @@ class StampCorrectionRequestController extends Controller
 						->diffInMinutes($correctionBreak->break_end_at);
 				}
 
-				// 明細合計で上書き（ズレ防止）
 				$stampCorrectionRequest->after_break_minutes = $recalculatedBreakMinutes;
 				$attendance->total_break_minutes = $recalculatedBreakMinutes;
 
-				// attendance_breaks を作り直す
 				AttendanceBreak::where('attendance_id', $attendance->id)->delete();
 
 				foreach ($stampCorrectionRequest->correctionBreaks as $correctionBreak) {
@@ -123,13 +116,15 @@ class StampCorrectionRequestController extends Controller
 					]);
 				}
 			} else {
-				// 明細がない申請は「休憩は現状維持」
 				$attendance->total_break_minutes = (int) $stampCorrectionRequest->after_break_minutes;
 			}
 
-			// ① attendances を after_* で更新（※休憩分が確定した後にやる）
+			// ① attendances を after_* で更新
 			$attendance->clock_in_at = $stampCorrectionRequest->after_clock_in_at;
 			$attendance->clock_out_at = $stampCorrectionRequest->after_clock_out_at;
+
+			// ✅ 承認時点の備考を「現在の正本」に反映
+			$attendance->note = $stampCorrectionRequest->reason;
 
 			if ($attendance->clock_in_at && $attendance->clock_out_at) {
 				$attendance->working_minutes =
@@ -145,7 +140,6 @@ class StampCorrectionRequestController extends Controller
 			$stampCorrectionRequest->save();
 		});
 
-		return redirect()
-			->route('admin.stamp_correction_request.index');
+		return redirect()->route('admin.stamp_correction_request.index');
 	}
 }

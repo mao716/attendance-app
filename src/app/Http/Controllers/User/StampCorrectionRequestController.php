@@ -117,7 +117,7 @@ class StampCorrectionRequestController extends Controller
 		}
 
 		// ---- 多重申請防止（pending がある時） ----
-		$latestRequest = $attendance->correctionRequests()->latest()->first();
+		$latestRequest = $attendance->stampCorrectionRequests()->latest()->first();
 
 		if ($latestRequest && $latestRequest->status === StampCorrectionRequest::STATUS_PENDING) {
 			return back()

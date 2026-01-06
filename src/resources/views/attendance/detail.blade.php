@@ -145,7 +145,7 @@ $canEdit = $isEditable && !$requestStatus;
 					<div class="cell cell-label"></div>
 					<div class="cell cell-error-full">
 						<p class="field-error-inline">
-							{{ $errors->first("breaks.$index.start") ?? $errors->first("breaks.$index.end") }}
+							{{ $errors->first("breaks.$index.end") ?: $errors->first("breaks.$index.start") }}
 						</p>
 					</div>
 				</div>
