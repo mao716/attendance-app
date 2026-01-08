@@ -11,9 +11,13 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StaffAttendanceCsvController extends Controller
 {
+	private const MINUTES_PER_HOUR = 60;
+
 	public function download(Request $request, int $id): StreamedResponse
 	{
-		$user = User::query()->where('role', 1)->findOrFail($id);
+		$user = User::query()
+			->where('role', User::ROLE_GENERAL)
+			->findOrFail($id);
 
 		$targetMonth = $this->resolveTargetMonth($request->query('month'));
 
@@ -37,7 +41,10 @@ class StaffAttendanceCsvController extends Controller
 			$out = fopen('php://output', 'w');
 
 			$writeRow = function (array $row) use ($out) {
-				$encoded = array_map(fn($v) => mb_convert_encoding((string) $v, 'SJIS-win', 'UTF-8'), $row);
+				$encoded = array_map(
+					fn($value) => mb_convert_encoding((string) $value, 'SJIS-win', 'UTF-8'),
+					$row
+				);
 				fputcsv($out, $encoded);
 			};
 
@@ -76,9 +83,9 @@ class StaffAttendanceCsvController extends Controller
 
 	private function formatMinutes(int $minutes): string
 	{
-		$h = intdiv($minutes, 60);
-		$m = $minutes % 60;
+		$hours = intdiv($minutes, self::MINUTES_PER_HOUR);
+		$minutePart = $minutes % self::MINUTES_PER_HOUR;
 
-		return sprintf('%d:%02d', $h, $m);
+		return sprintf('%d:%02d', $hours, $minutePart);
 	}
 }

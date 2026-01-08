@@ -7,89 +7,69 @@ use App\Models\Attendance;
 use App\Models\StampCorrectionRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class AttendanceDetailController extends Controller
 {
-	public function show(Request $request, Attendance $attendance)
+	public function show(Request $request, Attendance $attendance): View
 	{
-		// 自分以外は403
-		if ($attendance->user_id !== Auth::id()) {
+		$user = Auth::user();
+
+		if (! $user || $attendance->user_id !== $user->id) {
 			abort(403);
 		}
 
-		// 申請一覧から来たか
 		$fromRequest = $request->boolean('from_request');
-		$requestId   = $request->integer('request_id'); // ← 申請一覧からはこれを必ず渡す
+		$requestId = $request->integer('request_id');
 
-		// 関連ロード（勤怠の休憩は常に必要）
 		$attendance->load([
-			'breaks' => fn($q) => $q->orderBy('break_start_at'),
+			'breaks' => fn($query) => $query->orderBy('break_start_at'),
 		]);
 
-		// 申請一覧から来た場合：対象の申請を「固定」して取得
 		$targetRequest = null;
 
 		if ($fromRequest) {
 			if (!$requestId) {
-				// request_id が無いのは設計上おかしいので弾く（好みで 404 or 403）
 				abort(404);
 			}
 
 			$targetRequest = StampCorrectionRequest::query()
 				->where('id', $requestId)
 				->where('attendance_id', $attendance->id)
-				->where('user_id', Auth::id())
-				->with(['correctionBreaks' => fn($q) => $q->orderBy('break_order')])
+				->where('user_id', $user->id)
+				->with(['correctionBreaks' => fn($query) => $query->orderBy('break_order')])
 				->firstOrFail();
 		} else {
-			// 勤務一覧から来た場合：最新申請を見て「pending中かどうか」だけ判断したい
 			$targetRequest = StampCorrectionRequest::query()
 				->where('attendance_id', $attendance->id)
-				->where('user_id', Auth::id())
-				->with(['correctionBreaks' => fn($q) => $q->orderBy('break_order')])
+				->where('user_id', $user->id)
+				->with(['correctionBreaks' => fn($query) => $query->orderBy('break_order')])
 				->latest()
 				->first();
 		}
 
-		/*
-        |--------------------------------------------------------------------------
-        | 表示モード決定
-        |--------------------------------------------------------------------------
-        | - from_request=1 : targetRequest の after を必ず表示（閲覧専用）
-        | - from_request=0 :
-        |    - pending があれば after を表示（閲覧専用）
-        |    - それ以外は attendance を表示（編集OK）
-        */
-		$isPending  = $targetRequest && $targetRequest->status === StampCorrectionRequest::STATUS_PENDING;
+		$isPending = $targetRequest && $targetRequest->status === StampCorrectionRequest::STATUS_PENDING;
 
 		$useAfterData = false;
 		$isEditable   = true;
-		$requestStatus = null; // 'pending' | 'approved' | null
+		$requestStatus = null;
 
 		if ($fromRequest) {
-			// 申請一覧 → 詳細は常に閲覧専用
 			$isEditable = false;
 			$useAfterData = true;
 			$requestStatus = $isPending ? 'pending' : 'approved';
 		} else {
-			// 勤務一覧 → 詳細
 			if ($isPending) {
 				$isEditable = false;
-				$useAfterData = true;
+				$useAfterData = false;
 				$requestStatus = 'pending';
 			} else {
-				// approved でも再申請OKなので editable のまま
 				$isEditable = true;
 				$useAfterData = false;
 				$requestStatus = null;
 			}
 		}
 
-		/*
-        |--------------------------------------------------------------------------
-        | 出勤・退勤（表示）
-        |--------------------------------------------------------------------------
-        */
 		$displayClockInAt  = $attendance->clock_in_at;
 		$displayClockOutAt = $attendance->clock_out_at;
 
@@ -101,26 +81,15 @@ class AttendanceDetailController extends Controller
 		$clockInTime  = optional($displayClockInAt)->format('H:i');
 		$clockOutTime = optional($displayClockOutAt)->format('H:i');
 
-		/*
-        |--------------------------------------------------------------------------
-        | 休憩（表示）
-        |--------------------------------------------------------------------------
-        | - after表示モードなら stamp_correction_breaks を優先
-        | - それ以外は attendance_breaks
-        */
-		if ($useAfterData && $targetRequest && $targetRequest->correctionBreaks->isNotEmpty()) {
-			$breakRows = $targetRequest->correctionBreaks->map(fn($b) => [
-				'start' => optional($b->break_start_at)->format('H:i'),
-				'end'   => optional($b->break_end_at)->format('H:i'),
-			])->values()->toArray();
-		} else {
-			$breakRows = $attendance->breaks->map(fn($b) => [
-				'start' => optional($b->break_start_at)->format('H:i'),
-				'end'   => optional($b->break_end_at)->format('H:i'),
-			])->values()->toArray();
-		}
+		$breakSource = ($useAfterData && $targetRequest && $targetRequest->correctionBreaks->isNotEmpty())
+			? $targetRequest->correctionBreaks
+			: $attendance->breaks;
 
-		// 編集可能なら「現在の休憩枠 + 1枠」を確保（追加入力用）
+		$breakRows = $breakSource->map(fn($break) => [
+			'start' => optional($break->break_start_at)->format('H:i'),
+			'end'   => optional($break->break_end_at)->format('H:i'),
+		])->values()->toArray();
+
 		if ($isEditable) {
 			$targetRowCount = count($breakRows) + 1;
 
@@ -129,34 +98,24 @@ class AttendanceDetailController extends Controller
 			}
 		}
 
-		/*
-        |--------------------------------------------------------------------------
-        | 備考（表示/フォーム初期値）
-        |--------------------------------------------------------------------------
-        | - 申請一覧→詳細：その申請の reason を表示（フォームは使わない）
-        | - 勤務一覧→詳細：
-        |    - pending：pending の reason を表示（閲覧用）
-        |    - editable：フォーム初期値は「最新 approved の reason」（残してOK仕様）
-        */
 		$noteForDisplay = null;
 		$noteForForm    = null;
 
 		if ($fromRequest && $targetRequest) {
 			$noteForDisplay = $targetRequest->reason;
 		} else {
-			if ($isPending && $targetRequest) {
-				$noteForDisplay = $targetRequest->reason;
+			if ($isPending) {
+				$noteForDisplay = null;
 			}
 
 			if ($isEditable) {
-				// 直接修正／次回申請の初期値は attendances.note
 				$noteForForm = $attendance->note;
 			}
 		}
 
 		return view('attendance.detail', [
 			'attendance'     => $attendance,
-			'user'           => Auth::user(),
+			'user'           => $user,
 			'clockInTime'    => $clockInTime,
 			'clockOutTime'   => $clockOutTime,
 			'breakRows'      => $breakRows,
@@ -164,8 +123,6 @@ class AttendanceDetailController extends Controller
 			'noteForForm'    => $noteForForm,
 			'requestStatus'  => $requestStatus,
 			'isEditable'     => $isEditable,
-
-			// デバッグや表示分岐に使いたいなら渡してOK
 			'fromRequest'    => $fromRequest,
 			'requestId'      => $requestId,
 		]);

@@ -7,7 +7,6 @@ use App\Models\StampCorrectionRequest;
 use App\Models\AttendanceBreak;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
-
 use Illuminate\View\View;
 
 class StampCorrectionRequestController extends Controller
@@ -33,13 +32,8 @@ class StampCorrectionRequestController extends Controller
 		);
 	}
 
-	/**
-	 * 申請詳細（承認ボタン付き）
-	 */
-	public function show(StampCorrectionRequest $request): View
+	public function show(StampCorrectionRequest $stampCorrectionRequest): View
 	{
-		$stampCorrectionRequest = $request;
-
 		$stampCorrectionRequest->load([
 			'attendance.user',
 			'attendance.breaks' => fn($builder) => $builder->orderBy('break_start_at'),
@@ -48,15 +42,15 @@ class StampCorrectionRequestController extends Controller
 
 		$attendance = $stampCorrectionRequest->attendance;
 
-		if (! $stampCorrectionRequest->attendance) {
+		if (! $attendance) {
 			abort(404);
 		}
 
 		$breakSource = $stampCorrectionRequest->correctionBreaks->isNotEmpty()
 			? $stampCorrectionRequest->correctionBreaks
-			: ($attendance?->breaks ?? collect());
+			: ($attendance->breaks ?? collect());
 
-		$breakRows = collect($breakSource)->map(function ($break) {
+		$breakRows = $breakSource->map(function ($break) {
 			return [
 				'start' => optional($break->break_start_at)->format('H:i'),
 				'end'   => optional($break->break_end_at)->format('H:i'),
@@ -69,13 +63,8 @@ class StampCorrectionRequestController extends Controller
 		));
 	}
 
-	/**
-	 * 承認処理
-	 */
-	public function approve(StampCorrectionRequest $request): RedirectResponse
+	public function approve(StampCorrectionRequest $stampCorrectionRequest): RedirectResponse
 	{
-		$stampCorrectionRequest = $request;
-
 		if ($stampCorrectionRequest->status !== StampCorrectionRequest::STATUS_PENDING) {
 			return back()->withErrors(['request' => 'この申請は承認待ちではありません。']);
 		}
@@ -88,11 +77,10 @@ class StampCorrectionRequestController extends Controller
 
 			$attendance = $stampCorrectionRequest->attendance;
 
-			if (!$attendance) {
+			if (! $attendance) {
 				abort(404);
 			}
 
-			// ② 休憩は「申請に明細があるときだけ」作り直す ＋ 分も再計算
 			$hasCorrectionBreaks = $stampCorrectionRequest->correctionBreaks->isNotEmpty();
 
 			if ($hasCorrectionBreaks) {
@@ -119,11 +107,9 @@ class StampCorrectionRequestController extends Controller
 				$attendance->total_break_minutes = (int) $stampCorrectionRequest->after_break_minutes;
 			}
 
-			// ① attendances を after_* で更新
 			$attendance->clock_in_at = $stampCorrectionRequest->after_clock_in_at;
 			$attendance->clock_out_at = $stampCorrectionRequest->after_clock_out_at;
 
-			// ✅ 承認時点の備考を「現在の正本」に反映
 			$attendance->note = $stampCorrectionRequest->reason;
 
 			if ($attendance->clock_in_at && $attendance->clock_out_at) {
@@ -134,7 +120,6 @@ class StampCorrectionRequestController extends Controller
 
 			$attendance->save();
 
-			// ③ 申請を承認済みに
 			$stampCorrectionRequest->status = StampCorrectionRequest::STATUS_APPROVED;
 			$stampCorrectionRequest->approved_at = now();
 			$stampCorrectionRequest->save();

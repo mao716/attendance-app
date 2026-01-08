@@ -7,17 +7,18 @@ use App\Models\Attendance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class AttendanceListController extends Controller
 {
-	public function index(Request $request)
-	{
-		// ?month=YYYY-MM（なければ今月）
-		$monthParam = $request->query('month');
+	private const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
+	public function index(Request $request): View
+	{
+		$monthParam = $request->query('month');
 		$targetMonth = $this->resolveTargetMonth($monthParam);
 
-		$year  = $targetMonth->year;
+		$year = $targetMonth->year;
 		$month = $targetMonth->month;
 
 		$attendances = Attendance::query()
@@ -27,11 +28,9 @@ class AttendanceListController extends Controller
 			->orderBy('work_date')
 			->get();
 
-		$attendancesByDate = $attendances->keyBy(function (Attendance $attendance) {
+		$attendancesByDate = $attendances->keyBy(function (Attendance $attendance): string {
 			return $attendance->work_date->toDateString();
 		});
-
-		$weekdays = ['日', '月', '火', '水', '木', '金', '土'];
 
 		$rows = [];
 		$daysInMonth = $targetMonth->daysInMonth;
@@ -40,27 +39,26 @@ class AttendanceListController extends Controller
 			$date = $targetMonth->copy()->addDays($dayOffset);
 			$dateKey = $date->toDateString();
 
-			/** @var Attendance|null $attendance */
 			$attendance = $attendancesByDate->get($dateKey);
 
-			$weekdayLabel = $weekdays[$date->dayOfWeek];
+			$weekdayLabel = self::WEEKDAYS[$date->dayOfWeek];
 			$dateLabel = sprintf('%02d/%02d(%s)', $date->month, $date->day, $weekdayLabel);
 
 			$rows[] = [
-				'date_label'    => $dateLabel,
-				'clock_in'      => $attendance?->clock_in_at?->format('H:i') ?? '',
-				'clock_out'     => $attendance?->clock_out_at?->format('H:i') ?? '',
+				'date_label' => $dateLabel,
+				'clock_in' => $attendance?->clock_in_at?->format('H:i') ?? '',
+				'clock_out' => $attendance?->clock_out_at?->format('H:i') ?? '',
 				'break_minutes' => $attendance?->total_break_minutes,
-				'work_minutes'  => $attendance?->working_minutes,
+				'work_minutes' => $attendance?->working_minutes,
 				'attendance_id' => $attendance?->id,
 			];
 		}
 
 		return view('attendance.list', [
-			'rows'           => $rows,
-			'targetMonth'    => $targetMonth,
-			'prevMonthParam' => $targetMonth->copy()->subMonth()->format('Y-m'),
-			'nextMonthParam' => $targetMonth->copy()->addMonth()->format('Y-m'),
+			'rows' => $rows,
+			'targetMonth' => $targetMonth,
+			'prevMonthParam' => $targetMonth->copy()->subMonthNoOverflow()->format('Y-m'),
+			'nextMonthParam' => $targetMonth->copy()->addMonthNoOverflow()->format('Y-m'),
 		]);
 	}
 

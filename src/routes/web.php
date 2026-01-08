@@ -83,12 +83,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
 		Route::get('/staff/list', [StaffController::class, 'index'])->name('staff.list');
 
 		Route::get('/attendance/staff/{user}', [StaffAttendanceController::class, 'index'])->name('attendance.staff');
-
 		Route::get('/attendance/staff/{user}/csv', [StaffAttendanceCsvController::class, 'download'])
 			->name('attendance.staff.csv');
 
 		Route::get('/stamp_correction_request/list', [AdminStampCorrectionRequestController::class, 'index'])->name('stamp_correction_request.index');
-		Route::get('/stamp_correction_request/approve/{request}', [AdminStampCorrectionRequestController::class, 'show'])->name('stamp_correction_request.show');
-		Route::post('/stamp_correction_request/approve/{request}', [AdminStampCorrectionRequestController::class, 'approve'])->name('stamp_correction_request.approve');
+		Route::get('/stamp_correction_request/approve/{stampCorrectionRequest}', [AdminStampCorrectionRequestController::class, 'show'])->name('stamp_correction_request.show');
+		Route::post('/stamp_correction_request/approve/{stampCorrectionRequest}', [AdminStampCorrectionRequestController::class, 'approve'])->name('stamp_correction_request.approve');
 	});
 });

@@ -35,7 +35,7 @@ class StaffAttendanceController extends Controller
 			$attendance = $attendancesByDate->get($workDate);
 
 			$rows[] = [
-				'date_label' => $this->formatMonthDayWithWeekday($cursor), // 06/01(木)
+				'date_label' => $this->formatMonthDayWithWeekday($cursor),
 				'clock_in' => $attendance?->clock_in_at ? Carbon::parse($attendance->clock_in_at)->format('H:i') : '',
 				'clock_out' => $attendance?->clock_out_at ? Carbon::parse($attendance->clock_out_at)->format('H:i') : '',
 				'break_minutes' => $attendance?->total_break_minutes,
@@ -66,10 +66,13 @@ class StaffAttendanceController extends Controller
 		}
 	}
 
+	private const WEEKDAYS = ['月', '火', '水', '木', '金', '土', '日'];
+	private const DAY_OF_WEEK_ISO_OFFSET = 1;
+
 	private function formatMonthDayWithWeekday(Carbon $date): string
 	{
-		$weekdays = ['月', '火', '水', '木', '金', '土', '日'];
-		$weekday = $weekdays[$date->dayOfWeekIso - 1];
+		$weekdayIndex = $date->dayOfWeekIso - self::DAY_OF_WEEK_ISO_OFFSET;
+		$weekday = self::WEEKDAYS[$weekdayIndex];
 
 		return $date->format('m/d') . "({$weekday})";
 	}

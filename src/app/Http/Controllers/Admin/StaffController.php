@@ -11,7 +11,7 @@ class StaffController extends Controller
 	public function index(): View
 	{
 		$users = User::query()
-			->where('role', '!=', 2)
+			->where('role', '!=', User::ROLE_ADMIN)
 			->orderBy('id')
 			->get();
 
