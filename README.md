@@ -53,7 +53,6 @@
 - **Nginx 1.21.1**
 - **Docker / Docker Compose**
 - **Mailhog**
-- **Blade（テンプレートエンジン）**
 
 ---
 
@@ -127,32 +126,15 @@ docker compose exec php php artisan db:seed
 | 秋田 朋美  | tomomi.a@coachtech.com        | password123    |
 | 中西 教夫  | norio.n@coachtech.com        | password123    |
 
-## 6. 画面一覧
+---
 
-| 画面ID | 画面名                           | パス                                      |
-|--------|------------------------------------|--------------------------------------------|
-| PG01   | 会員登録画面（一般）               | /register                                   |
-| PG02   | ログイン画面（一般）               | /login                                      |
-| PG03   | 勤怠登録画面                       | /attendance                                 |
-| PG04   | 勤怠一覧画面                       | /attendance/list                            |
-| PG05   | 勤怠詳細画面                       | /attendance/detail/{id}                     |
-| PG06   | 修正申請一覧（一般）               | /stamp_correction_request/list              |
-| PG07   | 管理者ログイン                     | /admin/login                                |
-| PG08   | 日次勤怠一覧（管理者）             | /admin/attendance/list                      |
-| PG09   | 日次勤怠詳細（管理者）             | /admin/attendance/{id}                      |
-| PG10   | スタッフ一覧                       | /admin/staff/list                           |
-| PG11   | スタッフ別月次勤怠一覧             | /admin/attendance/staff/{id}                |
-| PG12   | 修正申請一覧（管理者）             | /stamp_correction_request/list              |
-| PG13   | 修正申請承認画面                   | /stamp_correction_request/approve/{id}      |
-
-
-## 7. ER 図
+## 6. ER 図
 
 ![ER 図](diagram.png)
 
 ---
 
-## 8. テーブル一覧
+## 7. テーブル一覧
 
 主要テーブル：
 
@@ -160,12 +142,13 @@ docker compose exec php php artisan db:seed
 - attendances
 - attendance_breaks
 - stamp_correction_requests
+- stamp_correction_breaks
 
 ※ カラム定義・制約はテーブル仕様書に準拠。
 
 ---
 
-## 9. テスト実行方法
+## 8. テスト実行方法
 以下のコマンドで PHPUnit テストを実行できます：
 ```bash
 docker compose exec php php artisan test

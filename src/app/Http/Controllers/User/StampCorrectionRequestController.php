@@ -55,6 +55,10 @@ class StampCorrectionRequestController extends Controller
 
 		$validated = $request->validated();
 
+		$attendance->load([
+			'breaks' => fn($q) => $q->orderBy('break_start_at'),
+		]);
+
 		// 勤務日
 		$workDate = $attendance->work_date->format('Y-m-d');
 
@@ -106,14 +110,18 @@ class StampCorrectionRequestController extends Controller
 			];
 		}
 
-		// 休憩を「一切入力してない」場合は、現状維持
 		$hasAnyBreakTouched = collect($breakInputs)->contains(
 			fn($breakInput) => !empty($breakInput['start']) || !empty($breakInput['end'])
 		);
 
 		if (! $hasAnyBreakTouched) {
+			// 休憩未入力＝現状維持。だけど「履歴固定」のために現状の休憩を申請にコピーする
 			$afterBreakMinutes = $beforeBreakMinutes;
-			$normalizedBreaks  = []; // 申請側の休憩明細は「なし」
+
+			$normalizedBreaks = $attendance->breaks->map(fn($b) => [
+				'start_at' => $b->break_start_at,
+				'end_at'   => $b->break_end_at,
+			])->values()->toArray();
 		}
 
 		// ---- 多重申請防止（pending がある時） ----
