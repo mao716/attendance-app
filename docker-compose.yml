@@ -13,7 +13,7 @@ services:
     build: ./docker/php
     volumes:
       - ./src:/var/www/
-    user: "${UID:-1000}:${GID:-1000}"   # ← デフォルト付きでMac/Win両対応
+    user: "${UID:-1000}:${GID:-1000}"
     environment:
       HOME: /var/www
     depends_on:
@@ -40,8 +40,8 @@ services:
     image: lscr.io/linuxserver/phpmyadmin:latest
     container_name: phpmyadmin
     environment:
-      - PUID=1000        # Mac/Linuxなら id -u で確認。Winならとりあえず1000でOK
-      - PGID=1000        # id -g
+      - PUID=1000
+      - PGID=1000
       - TZ=Asia/Tokyo
       - PMA_ARBITRARY=1
       - PMA_HOST=mysql
@@ -53,3 +53,10 @@ services:
     ports:
       - "8080:80"
     restart: unless-stopped
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"
+    expose:
+      - "1025"

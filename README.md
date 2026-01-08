@@ -42,6 +42,7 @@
 - 修正申請内容の承認処理
 - スタッフ一覧表示
 - スタッフ別月次勤怠一覧表示
+- スタッフ別月次勤怠CSV出力
 
 ---
 
@@ -78,15 +79,17 @@ docker compose exec php composer install
 ```bash
 cp .env.example .env
 ```
-必要に応じて以下の DB 設定を確認：
-```env
-DB_CONNECTION=mysql
-DB_HOST=mysql
-DB_PORT=3306
-DB_DATABASE=attendance_db
-DB_USERNAME=attendance_user
-DB_PASSWORD=attendance_pass
-```
+本リポジトリでは、Docker環境でそのまま起動できるように .env.example に開発用の初期値を記載しています。
+必要に応じて `.env` を確認してください（例：DB接続）。
+
+#### ▼ メール認証（開発環境用）の設定
+
+本アプリでは会員登録時にメール認証を行います。
+開発環境では MailHog を使用します。
+- **MailHog Web UI：`http://localhost:8025`**
+- **SMTP：`mailhog:1025`（Docker内部）**
+
+※ 開発環境ではメール送信を即時確認できるよう、`.env.example` では `QUEUE_CONNECTION=sync` を採用しています。（`QUEUE_CONNECTION=database` を使用する場合は `php artisan queue:work` の起動が必要です）
 
 ### ⑤ アプリケーションキー生成
 ```bash
@@ -95,8 +98,7 @@ docker compose exec php php artisan key:generate
 
 ### ⑥ マイグレーション・シーディング
 ```bash
-docker compose exec php php artisan migrate
-docker compose exec php php artisan db:seed
+docker compose exec php php artisan migrate --seed
 ```
 
 ### ⑦ ブラウザで確認

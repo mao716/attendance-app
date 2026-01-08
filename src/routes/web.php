@@ -31,7 +31,7 @@ Route::middleware('guest')->group(function () {
 		->name('register');
 });
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
 	Route::get('/attendance', [UserAttendanceController::class, 'index'])
 		->name('attendance.index');
 
