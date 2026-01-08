@@ -11,21 +11,15 @@ use Illuminate\View\View;
 
 class StaffAttendanceController extends Controller
 {
-	/**
-	 * スタッフ別 勤怠一覧（月次）
-	 * /admin/attendance/staff/{user}?month=YYYY-MM
-	 */
 	public function index(Request $request, User $user): View
 	{
 		$targetMonth = $this->resolveTargetMonth($request->query('month'));
 		$monthStart = $targetMonth->copy()->startOfMonth();
 		$monthEnd = $targetMonth->copy()->endOfMonth();
 
-		// 前月/翌月パラメータ
 		$prevMonthParam = $targetMonth->copy()->subMonthNoOverflow()->format('Y-m');
 		$nextMonthParam = $targetMonth->copy()->addMonthNoOverflow()->format('Y-m');
 
-		// 対象月の勤怠をまとめて取得（N+1回避）
 		$attendancesByDate = Attendance::query()
 			->where('user_id', $user->id)
 			->whereBetween('work_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
@@ -34,7 +28,6 @@ class StaffAttendanceController extends Controller
 				return Carbon::parse($attendance->work_date)->toDateString();
 			});
 
-		// 全日付分の行を作る（勤怠がない日は空欄）
 		$rows = [];
 		$cursor = $monthStart->copy();
 		while ($cursor->lte($monthEnd)) {
@@ -68,7 +61,7 @@ class StaffAttendanceController extends Controller
 			return $monthParam
 				? Carbon::createFromFormat('Y-m', $monthParam)->startOfMonth()
 				: Carbon::today()->startOfMonth();
-		} catch (\Throwable $exception) {
+		} catch (\Throwable) {
 			return Carbon::today()->startOfMonth();
 		}
 	}

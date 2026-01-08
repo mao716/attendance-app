@@ -57,6 +57,26 @@
 	letter-spacing: 0.07em;
 }
 
+.list-footer {
+	padding: 24px 0 40px;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.list-button {
+	display: inline-block;
+	min-width: 90px;
+	padding: 10px 24px;
+	line-height: 1;
+	border-radius: 4px;
+	border: none;
+	background: #000;
+	color: #fff;
+	font-size: 16px;
+	letter-spacing: 0.1em;
+	cursor: pointer;
+}
+
 /* レスポンシブ（PG04専用） */
 @media (max-width: 767px) {
 	.attendance-list-month-nav {

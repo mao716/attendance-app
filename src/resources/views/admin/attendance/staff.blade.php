@@ -79,11 +79,16 @@
 			</table>
 		</div>
 
-		{{-- CSV出力ボタン（UIだけ先に置くなら） --}}
-		{{-- <div class="list-page-footer">
-			<button class="btn btn-primary" type="button">CSV出力</button>
-		</div> --}}
-
+		<div class="list-footer">
+			<a
+				href="{{ route('admin.attendance.staff.csv', [
+            'user' => $user->id,
+            'month' => $targetMonth->format('Y-m'),
+        ]) }}"
+				class="list-button">
+				CSV出力
+			</a>
+		</div>
 	</div>
 </div>
 @endsection

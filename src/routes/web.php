@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\LoginController as AdminLoginController;
 use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
 use App\Http\Controllers\Admin\StaffController;
 use App\Http\Controllers\Admin\StaffAttendanceController;
+use App\Http\Controllers\Admin\StaffAttendanceCsvController;
 use App\Http\Controllers\Admin\StampCorrectionRequestController as AdminStampCorrectionRequestController;
 
 Route::get('/', function () {
@@ -80,7 +81,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
 		Route::put('/attendance/{attendance}', [AdminAttendanceController::class, 'update'])->name('attendance.update');
 
 		Route::get('/staff/list', [StaffController::class, 'index'])->name('staff.list');
+
 		Route::get('/attendance/staff/{user}', [StaffAttendanceController::class, 'index'])->name('attendance.staff');
+
+		Route::get('/attendance/staff/{user}/csv', [StaffAttendanceCsvController::class, 'download'])
+			->name('attendance.staff.csv');
 
 		Route::get('/stamp_correction_request/list', [AdminStampCorrectionRequestController::class, 'index'])->name('stamp_correction_request.index');
 		Route::get('/stamp_correction_request/approve/{request}', [AdminStampCorrectionRequestController::class, 'show'])->name('stamp_correction_request.show');
