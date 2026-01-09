@@ -19,7 +19,6 @@ $isPendingTab = $tab === 'pending';
 	<div class="list-page-container">
 		<h1 class="page-title">申請一覧</h1>
 
-		{{-- タブナビゲーション --}}
 		<div class="request-tabs">
 			<a
 				href="{{ route('stamp_correction_request.user_index', ['tab' => 'pending']) }}"
@@ -53,13 +52,8 @@ $isPendingTab = $tab === 'pending';
 
 					@forelse ($list as $requestRow)
 					<tr>
-						{{-- 状態（モデルのアクセサ） --}}
 						<td>{{ $requestRow->status_label }}</td>
-
-						{{-- 名前 --}}
 						<td>{{ optional($requestRow->user)->name }}</td>
-
-						{{-- 対象日時：勤怠の勤務日を表示（なければハイフン） --}}
 						<td class="table-col-date">
 							@if ($requestRow->attendance && $requestRow->attendance->work_date)
 							{{ \Illuminate\Support\Carbon::parse($requestRow->attendance->work_date)->format('Y/m/d') }}
@@ -67,18 +61,12 @@ $isPendingTab = $tab === 'pending';
 							-
 							@endif
 						</td>
-
-						{{-- 申請理由（長すぎる場合は少しだけ切る） --}}
 						<td>
 							{{ \Illuminate\Support\Str::limit($requestRow->reason, 13) }}
 						</td>
-
-						{{-- 申請日時：作成日時 --}}
 						<td class="table-col-date">
 							{{ $requestRow->created_at->format('Y/m/d') }}
 						</td>
-
-						{{-- 詳細：勤怠詳細画面（PG05）へ --}}
 						<td class="table-col-detail">
 							@if ($requestRow->attendance)
 							<a

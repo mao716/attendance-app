@@ -11,7 +11,6 @@
 	<div class="list-page-container">
 		<h1 class="page-title">{{ $targetDateLabel }}の勤怠</h1>
 
-		{{-- 日ナビ（見た目はユーザー月ナビと同じCSSを流用） --}}
 		<div class="attendance-list-month-nav">
 			<a href="{{ route('admin.attendance.list', ['date' => $targetDate->copy()->subDay()->toDateString()]) }}"
 				class="month-nav-button is-prev">

@@ -11,16 +11,9 @@
 
 	<h1>管理者ログイン</h1>
 
-	{{-- 認証失敗 --}}
-	@if ($errors->has('login_error'))
-	<div class="auth-error">
-		{{ $errors->first('login_error') }}
-	</div>
-	@endif
-
-	<form method="POST" action="{{ route('admin.login.perform') }}">
+	<form method="POST" action="{{ route('login') }}" novalidate>
 		@csrf
-
+		<input type="hidden" name="login_type" value="admin">
 		<div class="auth-field">
 			<label for="email">メールアドレス</label>
 			<input id="email" type="email" name="email" value="{{ old('email') }}">

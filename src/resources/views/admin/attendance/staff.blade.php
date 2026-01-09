@@ -11,7 +11,6 @@
 	<div class="list-page-container">
 		<h1 class="page-title">{{ $user->name }}さんの勤怠</h1>
 
-		{{-- 月ナビ --}}
 		<div class="attendance-list-month-nav">
 			<a href="{{ route('admin.attendance.staff', ['user' => $user->id, 'month' => $prevMonthParam]) }}"
 				class="month-nav-button is-prev">

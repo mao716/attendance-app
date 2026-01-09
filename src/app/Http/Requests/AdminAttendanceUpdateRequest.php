@@ -113,12 +113,12 @@ class AdminAttendanceUpdateRequest extends FormRequest
 				];
 			}
 
-			usort($normalized, fn($a, $b) => $a['start'] <=> $b['start']);
+			usort($normalized, fn($left, $right) => $left['start'] <=> $right['start']);
 
-			for ($i = 0; $i < count($normalized) - 1; $i++) {
-				if ($normalized[$i]['end'] > $normalized[$i + 1]['start']) {
+			for ($currentIndex = 0; $currentIndex < count($normalized) - 1; $currentIndex++) {
+				if ($normalized[$currentIndex]['end'] > $normalized[$currentIndex + 1]['start']) {
 					$validator->errors()->add(
-						"breaks.{$normalized[$i]['index']}.start",
+						"breaks.{$normalized[$currentIndex]['index']}.start",
 						'休憩時間が不適切な値です'
 					);
 					break;
@@ -129,8 +129,8 @@ class AdminAttendanceUpdateRequest extends FormRequest
 
 	private function toMinutes(string $time): int
 	{
-		[$h, $m] = explode(self::TIME_SEPARATOR, $time);
+		[$hours, $minutes] = explode(self::TIME_SEPARATOR, $time);
 
-		return ((int) $h) * self::MINUTES_PER_HOUR + (int) $m;
+		return ((int) $hours) * self::MINUTES_PER_HOUR + (int) $minutes;
 	}
 }

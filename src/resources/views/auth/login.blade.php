@@ -11,14 +11,7 @@
 
 	<h1>ログイン</h1>
 
-	{{-- 認証失敗 --}}
-	@if ($errors->has('login_error'))
-	<div class="auth-error">
-		{{ $errors->first('login_error') }}
-	</div>
-	@endif
-
-	<form method="POST" action="{{ route('login') }}">
+	<form method="POST" action="{{ route('login') }}" novalidate>
 		@csrf
 
 		<div class="auth-field">
@@ -40,7 +33,7 @@
 		<button class="btn btn-primary" type="submit">ログインする</button>
 
 		<div class="auth-link">
-			<a href="{{ route('register') }}">会員登録はこちら</a>
+			<a href="/register">会員登録はこちら</a>
 		</div>
 
 	</form>

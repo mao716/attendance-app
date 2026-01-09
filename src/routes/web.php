@@ -2,8 +2,6 @@
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\LoginController as UserLoginController;
-use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\User\AttendanceController as UserAttendanceController;
 use App\Http\Controllers\User\AttendanceListController;
 use App\Http\Controllers\User\AttendanceDetailController;
@@ -21,14 +19,6 @@ Route::get('/', function () {
 	}
 
 	return redirect()->route('login');
-});
-
-Route::middleware('guest')->group(function () {
-	Route::post('/login', [UserLoginController::class, 'login'])
-		->name('login');
-
-	Route::post('/register', [RegisterController::class, 'store'])
-		->name('register');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -70,7 +60,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 	Route::middleware('guest')->group(function () {
 		Route::get('/login', [AdminLoginController::class, 'showLoginForm'])->name('login');
-		Route::post('/login', [AdminLoginController::class, 'authenticate'])->name('login.perform');
 	});
 
 	Route::middleware(['auth', 'can:is-admin'])->group(function () {

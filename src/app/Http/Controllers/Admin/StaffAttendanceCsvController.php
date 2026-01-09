@@ -16,7 +16,7 @@ class StaffAttendanceCsvController extends Controller
 	public function download(Request $request, int $id): StreamedResponse
 	{
 		$user = User::query()
-			->where('role', User::ROLE_GENERAL)
+			->where('role', User::ROLE_USER)
 			->findOrFail($id);
 
 		$targetMonth = $this->resolveTargetMonth($request->query('month'));

@@ -11,7 +11,6 @@
 	<div class="list-page-container">
 		<h1 class="page-title">勤怠一覧</h1>
 
-		{{-- 月ナビ --}}
 		<div class="attendance-list-month-nav">
 			<a href="{{ route('attendance.list', ['month' => $prevMonthParam]) }}" class=" month-nav-button is-prev">
 				<img src="{{ asset('images/icon_arrow_left.svg') }}" alt="" class="month-nav-arrow-icon">

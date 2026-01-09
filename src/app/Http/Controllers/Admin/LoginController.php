@@ -13,6 +13,7 @@ class LoginController extends Controller
 {
 	public function showLoginForm(): View
 	{
+		session(['url.intended' => route('admin.attendance.list')]);
 		return view('admin.auth.login');
 	}
 

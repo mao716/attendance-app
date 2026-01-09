@@ -8,28 +8,25 @@
 
 		<nav class="site-nav">
 			<ul class="site-nav-list">
-				{{-- 勤怠一覧（管理者TOP） --}}
+
 				<li class="site-nav-item">
 					<a href="{{ route('admin.attendance.list') }}" class="site-nav-link">
 						勤怠一覧
 					</a>
 				</li>
 
-				{{-- スタッフ一覧 --}}
 				<li class="site-nav-item">
 					<a href="{{ route('admin.staff.list') }}" class="site-nav-link">
 						スタッフ一覧
 					</a>
 				</li>
 
-				{{-- 申請一覧（修正申請一覧） --}}
 				<li class="site-nav-item">
 					<a href="{{ route('admin.stamp_correction_request.index') }}" class="site-nav-link">
 						申請一覧
 					</a>
 				</li>
 
-				{{-- ログアウト（POST） --}}
 				<li class="site-nav-item">
 					<form method="POST"
 						action="{{ route('admin.logout') }}"

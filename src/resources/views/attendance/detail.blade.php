@@ -25,7 +25,6 @@ $canEdit = $isEditable && !$requestStatus;
 				class="attendance-detail-form">
 				@csrf
 
-				{{-- 名前 --}}
 				<div class="attendance-detail-row">
 					<div class="cell cell-label">名前</div>
 					<div class="cell cell-main1 name-value">{{ $user->name }}</div>
@@ -33,7 +32,6 @@ $canEdit = $isEditable && !$requestStatus;
 					<div class="cell cell-main3"></div>
 				</div>
 
-				{{-- 日付 --}}
 				<div class="attendance-detail-row attendance-detail-row-date">
 					<div class="cell cell-label">日付</div>
 
@@ -48,7 +46,6 @@ $canEdit = $isEditable && !$requestStatus;
 					<div class="cell cell-main3"></div>
 				</div>
 
-				{{-- 出勤・退勤 --}}
 				<div class="attendance-detail-row {{ ($errors->has('clock_in_at') || $errors->has('clock_out_at')) ? 'has-error' : '' }}">
 					<div class="cell cell-label">出勤・退勤</div>
 
@@ -98,7 +95,6 @@ $canEdit = $isEditable && !$requestStatus;
 				</div>
 				@endif
 
-				{{-- 休憩 --}}
 				@foreach ($breakRows as $index => $row)
 				@php
 				$hasBreakError = $errors->has("breaks.$index.start") || $errors->has("breaks.$index.end");
@@ -152,7 +148,6 @@ $canEdit = $isEditable && !$requestStatus;
 				@endif
 				@endforeach
 
-				{{-- 備考 --}}
 				<div class="attendance-detail-row {{ $errors->has('reason') ? 'has-error' : '' }}">
 					<div class="cell cell-label">備考</div>
 					<div class="cell cell-full">
@@ -180,7 +175,6 @@ $canEdit = $isEditable && !$requestStatus;
 
 		</div>
 
-		{{-- カードの外のフッター --}}
 		<div class="attendance-detail-footer">
 			@if ($requestStatus === 'pending')
 			<p class="attendance-detail-message is-pending">※承認待ちのため修正はできません。</p>

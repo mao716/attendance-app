@@ -16,13 +16,12 @@ $attendance = $stampCorrectionRequest->attendance;
 	<div class="attendance-detail">
 		<h1 class="page-title">勤怠詳細</h1>
 
-		{{-- 上部エラー --}}
 		@if ($errors->has('request'))
 		<p class="attendance-detail-message is-error">{{ $errors->first('request') }}</p>
 		@endif
 
 		<div class="attendance-detail-card">
-			{{-- 名前 --}}
+
 			<div class="attendance-detail-row">
 				<div class="cell cell-label">名前</div>
 				<div class="cell cell-main1 name-value">
@@ -32,18 +31,15 @@ $attendance = $stampCorrectionRequest->attendance;
 				<div class="cell cell-main3"></div>
 			</div>
 
-			{{-- 日付 --}}
 			<div class="attendance-detail-row attendance-detail-row-date">
 				<div class="cell cell-label">日付</div>
 
-				{{-- 年 --}}
 				<div class="cell cell-main1">
 					<span class="attendance-detail-date-year">
 						{{ $attendance->work_date->format('Y年') }}
 					</span>
 				</div>
 
-				{{-- 月日 --}}
 				<div class="cell cell-main2">
 					<span class="attendance-detail-date-md">
 						{{ $attendance->work_date->format('n月j日') }}
@@ -53,7 +49,6 @@ $attendance = $stampCorrectionRequest->attendance;
 				<div class="cell cell-main3"></div>
 			</div>
 
-			{{-- 出勤〜退勤 --}}
 			<div class="attendance-detail-row">
 				<div class="cell cell-label">出勤・退勤</div>
 
@@ -74,7 +69,6 @@ $attendance = $stampCorrectionRequest->attendance;
 				</div>
 			</div>
 
-			{{-- 休憩 --}}
 			@foreach ($breakRows as $index => $breakRow)
 			<div class="attendance-detail-row">
 				<div class="cell cell-label">
@@ -96,7 +90,6 @@ $attendance = $stampCorrectionRequest->attendance;
 			</div>
 			@endforeach
 
-			{{-- 備考（申請理由） --}}
 			<div class="attendance-detail-row">
 				<div class="cell cell-label">備考</div>
 				<div class="cell cell-full">
