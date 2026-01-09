@@ -161,7 +161,33 @@ docker compose exec php php artisan migrate --seed
 ---
 
 ## 8. テスト実行方法
-以下のコマンドで PHPUnit テストを実行できます：
+
+テストは PHPUnit を使用しています。
+
+### 1. テスト用環境変数ファイルの作成
+以下を参考に `.env.testing` を作成してください。
+
+```env
+APP_ENV=testing
+APP_KEY=base64:xxxx
+APP_DEBUG=true
+
+DB_CONNECTION=sqlite
+DB_DATABASE=database/testing.sqlite
+
+CACHE_DRIVER=array
+SESSION_DRIVER=array
+QUEUE_CONNECTION=sync
+MAIL_MAILER=array
+```
+※APP_KEY には、`.env` に設定されているものと同じ値を設定してください。
+
+### 2. マイグレーション実行
 ```bash
-docker compose exec php php artisan test
+php artisan migrate --env=testing
+```
+
+### 3. テスト実行
+```bash
+php artisan test
 ```
