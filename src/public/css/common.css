@@ -116,16 +116,10 @@ body {
 	width: 8px;
 	height: 1.2em;
 	margin-top: 0.5px;
-	/* ← 1〜3px 調整でど真ん中になる */
 	background: #000;
 	border-radius: 2px;
 }
 
-/* =========================
-   共通：テーブルコンポーネント
-   ========================= */
-
-/* ラッパー（スクロール用） */
 .table-wrap {
 	background: #fff;
 	border-radius: 8px;
@@ -133,7 +127,6 @@ body {
 	overflow-x: auto;
 }
 
-/* テーブル本体 */
 .table {
 	width: 100%;
 	border-collapse: collapse;
@@ -144,7 +137,6 @@ body {
 	letter-spacing: 0.1em;
 }
 
-/* セル */
 .table th,
 .table td {
 	padding: 8px 12px;
@@ -152,7 +144,6 @@ body {
 	border-bottom: 2px solid #d8d8d8;
 }
 
-/* 見出し行 */
 .table thead th {
 	color: #616161;
 	font-weight: 700;
@@ -160,12 +151,10 @@ body {
 	letter-spacing: 0.1em;
 }
 
-/* 最終行は線を消す */
 .table tbody tr:last-child td {
 	border-bottom: none;
 }
 
-/* カラム（用途別・任意） */
 .table-col-time,
 .table-col-date,
 .table-col-detail {
@@ -176,7 +165,6 @@ body {
 	letter-spacing: 0.1em;
 }
 
-/* 詳細リンク（共通化） */
 .table-detail-link {
 	color: #000;
 	text-decoration: none;
