@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Fortify;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
+use Laravel\Fortify\Contracts\LoginResponse;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -70,6 +71,21 @@ class FortifyServiceProvider extends ServiceProvider
 			}
 
 			return $user;
+		});
+
+		$this->app->singleton(LoginResponse::class, function () {
+			return new class implements LoginResponse {
+				public function toResponse($request)
+				{
+					$user = auth()->user();
+
+					if ($user && (int) $user->role === \App\Models\User::ROLE_ADMIN) {
+						return redirect('/admin/attendance/list');
+					}
+
+					return redirect('/attendance');
+				}
+			};
 		});
 	}
 }

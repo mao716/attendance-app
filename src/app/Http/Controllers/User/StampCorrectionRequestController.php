@@ -41,9 +41,11 @@ class StampCorrectionRequestController extends Controller
 		]);
 	}
 
-	public function store(AttendanceCorrectionRequest $request, Attendance $attendance): RedirectResponse
+	public function store(AttendanceCorrectionRequest $request, int $id): RedirectResponse
 	{
 		$user = Auth::user();
+
+		$attendance = Attendance::query()->findOrFail($id);
 
 		if (! $user || $attendance->user_id !== $user->id) {
 			abort(403);

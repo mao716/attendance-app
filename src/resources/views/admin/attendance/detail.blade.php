@@ -31,7 +31,7 @@ $canEdit = $isEditable && $requestStatus !== 'pending';
 		<div class="attendance-detail-card">
 
 			<form
-				action="{{ route('admin.attendance.update', ['attendance' => $attendance->id]) }}"
+				action="{{ route('admin.attendance.update', $attendance->id) }}"
 				method="post"
 				id="attendance-detail-form"
 				class="attendance-detail-form">

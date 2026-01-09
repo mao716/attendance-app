@@ -22,7 +22,7 @@
 				</li>
 
 				<li class="site-nav-item">
-					<a href="{{ route('admin.stamp_correction_request.index') }}" class="site-nav-link">
+					<a href="{{ route('stamp_correction_request.list') }}" class="site-nav-link">
 						申請一覧
 					</a>
 				</li>

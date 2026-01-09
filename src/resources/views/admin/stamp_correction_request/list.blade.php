@@ -25,11 +25,11 @@ $list = $isPendingTab ? $pendingRequests : $approvedRequests;
 		@endif
 
 		<div class="request-tabs">
-			<a href="{{ route('admin.stamp_correction_request.index', ['tab' => 'pending']) }}"
+			<a href="{{ route('stamp_correction_request.list', ['tab' => 'pending']) }}"
 				class="request-tab{{ $isPendingTab ? ' is-active' : '' }}">
 				承認待ち
 			</a>
-			<a href="{{ route('admin.stamp_correction_request.index', ['tab' => 'approved']) }}"
+			<a href="{{ route('stamp_correction_request.list', ['tab' => 'approved']) }}"
 				class="request-tab{{ !$isPendingTab ? ' is-active' : '' }}">
 				承認済み
 			</a>
@@ -56,7 +56,11 @@ $list = $isPendingTab ? $pendingRequests : $approvedRequests;
 						<td>{{ \Illuminate\Support\Str::limit($requestRow->reason, 13) }}</td>
 						<td class="table-col-date">{{ $requestRow->created_at->format('Y/m/d') }}</td>
 						<td class="table-col-detail">
-							<a class="table-detail-link" href="{{ route('admin.stamp_correction_request.show', $requestRow) }}">
+							<a
+								class="table-detail-link"
+								href="{{ route('admin.stamp_correction_request.show', [
+								'attendance_correct_request_id' => $requestRow->id,
+								]) }}">
 								詳細
 							</a>
 						</td>

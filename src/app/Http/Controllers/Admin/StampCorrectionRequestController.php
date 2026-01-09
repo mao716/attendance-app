@@ -32,13 +32,15 @@ class StampCorrectionRequestController extends Controller
 		);
 	}
 
-	public function show(StampCorrectionRequest $stampCorrectionRequest): View
+	public function show(int $attendanceCorrectRequestId): View
 	{
-		$stampCorrectionRequest->load([
-			'attendance.user',
-			'attendance.breaks' => fn($builder) => $builder->orderBy('break_start_at'),
-			'correctionBreaks'  => fn($builder) => $builder->orderBy('break_order'),
-		]);
+		$stampCorrectionRequest = StampCorrectionRequest::query()
+			->with([
+				'attendance.user',
+				'attendance.breaks' => fn($builder) => $builder->orderBy('break_start_at'),
+				'correctionBreaks'  => fn($builder) => $builder->orderBy('break_order'),
+			])
+			->findOrFail($attendanceCorrectRequestId);
 
 		$attendance = $stampCorrectionRequest->attendance;
 
@@ -50,21 +52,18 @@ class StampCorrectionRequestController extends Controller
 			? $stampCorrectionRequest->correctionBreaks
 			: ($attendance->breaks ?? collect());
 
-		$breakRows = $breakSource->map(function ($break) {
-			return [
-				'start' => optional($break->break_start_at)->format('H:i'),
-				'end'   => optional($break->break_end_at)->format('H:i'),
-			];
-		})->values()->toArray();
+		$breakRows = $breakSource->map(fn($break) => [
+			'start' => optional($break->break_start_at)->format('H:i'),
+			'end'   => optional($break->break_end_at)->format('H:i'),
+		])->values()->toArray();
 
-		return view('admin.stamp_correction_request.show', compact(
-			'stampCorrectionRequest',
-			'breakRows'
-		));
+		return view('admin.stamp_correction_request.show', compact('stampCorrectionRequest', 'breakRows'));
 	}
 
-	public function approve(StampCorrectionRequest $stampCorrectionRequest): RedirectResponse
+	public function approve(int $attendanceCorrectRequestId): RedirectResponse
 	{
+		$stampCorrectionRequest = StampCorrectionRequest::query()->findOrFail($attendanceCorrectRequestId);
+
 		if ($stampCorrectionRequest->status !== StampCorrectionRequest::STATUS_PENDING) {
 			return back()->withErrors(['request' => 'この申請は承認待ちではありません。']);
 		}
@@ -72,7 +71,7 @@ class StampCorrectionRequestController extends Controller
 		DB::transaction(function () use ($stampCorrectionRequest) {
 			$stampCorrectionRequest->load([
 				'attendance.breaks' => fn($builder) => $builder->orderBy('break_start_at'),
-				'correctionBreaks' => fn($builder) => $builder->orderBy('break_order'),
+				'correctionBreaks'  => fn($builder) => $builder->orderBy('break_order'),
 			]);
 
 			$attendance = $stampCorrectionRequest->attendance;
@@ -125,6 +124,6 @@ class StampCorrectionRequestController extends Controller
 			$stampCorrectionRequest->save();
 		});
 
-		return redirect()->route('admin.stamp_correction_request.index');
+		return redirect()->route('stamp_correction_request.list');
 	}
 }

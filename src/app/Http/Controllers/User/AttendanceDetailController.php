@@ -11,9 +11,13 @@ use Illuminate\View\View;
 
 class AttendanceDetailController extends Controller
 {
-	public function show(Request $request, Attendance $attendance): View
+	public function show(Request $request, int $id): View
 	{
 		$user = Auth::user();
+
+		$attendance = Attendance::query()
+			->with(['breaks' => fn($query) => $query->orderBy('break_start_at')])
+			->findOrFail($id);
 
 		if (! $user || $attendance->user_id !== $user->id) {
 			abort(403);
@@ -22,14 +26,10 @@ class AttendanceDetailController extends Controller
 		$fromRequest = $request->boolean('from_request');
 		$requestId = $request->integer('request_id');
 
-		$attendance->load([
-			'breaks' => fn($query) => $query->orderBy('break_start_at'),
-		]);
-
 		$targetRequest = null;
 
 		if ($fromRequest) {
-			if (!$requestId) {
+			if (! $requestId) {
 				abort(404);
 			}
 

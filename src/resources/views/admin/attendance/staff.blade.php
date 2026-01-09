@@ -12,8 +12,10 @@
 		<h1 class="page-title">{{ $user->name }}さんの勤怠</h1>
 
 		<div class="attendance-list-month-nav">
-			<a href="{{ route('admin.attendance.staff', ['user' => $user->id, 'month' => $prevMonthParam]) }}"
-				class="month-nav-button is-prev">
+			<a href="{{ route('admin.attendance.staff', [
+				'id' => $user->id,
+				'month' => $prevMonthParam,
+				]) }}" class="month-nav-button is-prev">
 				<img src="{{ asset('images/icon_arrow_left.svg') }}" alt="" class="month-nav-arrow-icon">
 				<span class="month-nav-label">前月</span>
 			</a>
@@ -25,8 +27,10 @@
 				<span class="month-nav-text">{{ $targetMonth->format('Y/m') }}</span>
 			</div>
 
-			<a href="{{ route('admin.attendance.staff', ['user' => $user->id, 'month' => $nextMonthParam]) }}"
-				class="month-nav-button is-next">
+			<a href="{{ route('admin.attendance.staff', [
+				'id' => $user->id,
+				'month' => $nextMonthParam,
+				]) }}" class="month-nav-button is-next">
 				<span class="month-nav-label">翌月</span>
 				<img src="{{ asset('images/icon_arrow_right.svg') }}" alt="" class="month-nav-arrow-icon">
 			</a>
@@ -79,11 +83,10 @@
 		</div>
 
 		<div class="list-footer">
-			<a
-				href="{{ route('admin.attendance.staff.csv', [
-            'user' => $user->id,
-            'month' => $targetMonth->format('Y-m'),
-        ]) }}"
+			<a href="{{ route('admin.attendance.staff.csv', [
+					'id' => $user->id,
+					'month' => $targetMonth->format('Y-m'),
+					]) }}"
 				class="list-button">
 				CSV出力
 			</a>

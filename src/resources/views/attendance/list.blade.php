@@ -64,7 +64,7 @@
 						<td class="table-col-time">{{ $formatMinutes($row['work_minutes']) }}</td>
 						<td class="table-col-detail">
 							@if (!empty($row['attendance_id']))
-							<a class="table-detail-link" href="{{ $row['attendance_id'] ? route('attendance.detail', $row['attendance_id']) : '#' }}">
+							<a class="table-detail-link" href="{{ $row['attendance_id'] ? route('attendance.detail', ['id' => $row['attendance_id']]) : '#' }}">
 								詳細
 							</a>
 							@endif

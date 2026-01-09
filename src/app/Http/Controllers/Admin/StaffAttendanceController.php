@@ -11,8 +11,10 @@ use Illuminate\View\View;
 
 class StaffAttendanceController extends Controller
 {
-	public function index(Request $request, User $user): View
+	public function index(Request $request, int $id): View
 	{
+		$user = User::query()->findOrFail($id);
+
 		$targetMonth = $this->resolveTargetMonth($request->query('month'));
 		$monthStart = $targetMonth->copy()->startOfMonth();
 		$monthEnd = $targetMonth->copy()->endOfMonth();

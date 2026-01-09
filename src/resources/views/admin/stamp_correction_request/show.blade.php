@@ -103,7 +103,11 @@ $attendance = $stampCorrectionRequest->attendance;
 
 		<div class="attendance-detail-footer">
 			@if ($stampCorrectionRequest->isPending())
-			<form method="post" action="{{ route('admin.stamp_correction_request.approve', $stampCorrectionRequest) }}">
+			<form
+				method="POST"
+				action="{{ route('admin.stamp_correction_request.approve', [
+				'attendance_correct_request_id' => $stampCorrectionRequest->id,
+				]) }}">
 				@csrf
 				<button type="submit" class="attendance-detail-button">承認する</button>
 			</form>

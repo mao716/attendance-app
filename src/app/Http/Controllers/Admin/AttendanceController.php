@@ -56,15 +56,17 @@ class AttendanceController extends Controller
 		}
 	}
 
-	public function show(Request $request, Attendance $attendance): View
+	public function show(Request $request, int $id): View
 	{
 		$fromRequest = $request->boolean('from_request');
 		$requestId   = $request->integer('request_id');
 
-		$attendance->load([
-			'user',
-			'breaks' => fn($query) => $query->orderBy('break_start_at'),
-		]);
+		$attendance = Attendance::query()
+			->with([
+				'user',
+				'breaks' => fn($query) => $query->orderBy('break_start_at'),
+			])
+			->findOrFail($id);
 
 		$user = $attendance->user;
 
@@ -171,8 +173,10 @@ class AttendanceController extends Controller
 		]);
 	}
 
-	public function update(AdminAttendanceUpdateRequest $request, Attendance $attendance): RedirectResponse
+	public function update(AdminAttendanceUpdateRequest $request, int $id): RedirectResponse
 	{
+		$attendance = Attendance::query()->findOrFail($id);
+
 		$hasPending = StampCorrectionRequest::query()
 			->where('attendance_id', $attendance->id)
 			->where('status', StampCorrectionRequest::STATUS_PENDING)
@@ -242,7 +246,7 @@ class AttendanceController extends Controller
 		});
 
 		return redirect()
-			->route('admin.attendance.detail', ['attendance' => $attendance->id])
+			->route('admin.attendance.detail', ['id' => $attendance->id])
 			->with('success', '勤怠を更新しました。');
 	}
 }

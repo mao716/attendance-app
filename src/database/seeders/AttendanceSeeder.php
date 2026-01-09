@@ -11,6 +11,8 @@ class AttendanceSeeder extends Seeder
 {
 	private const DAYS = 90;
 
+	private const OFF_DAYS_PER_WEEK = 2;
+
 	private const MIN_WORK_HOURS = 6;
 	private const MAX_WORK_HOURS = 8;
 
@@ -29,14 +31,15 @@ class AttendanceSeeder extends Seeder
 			->get();
 
 		foreach ($users as $user) {
+			$offDates = $this->buildOffDatesForUser();
+
 			foreach (range(0, self::DAYS - 1) as $i) {
 				$date = Carbon::today(self::TZ)->subDays($i);
+				$workDate = $date->toDateString();
 
-				if ($date->isWeekend()) {
+				if (isset($offDates[$workDate])) {
 					continue;
 				}
-
-				$workDate = $date->toDateString();
 
 				$workingHours = rand(self::MIN_WORK_HOURS, self::MAX_WORK_HOURS);
 				$workingMinutes = $workingHours * 60;
@@ -73,5 +76,44 @@ class AttendanceSeeder extends Seeder
 				]);
 			}
 		}
+	}
+
+	private function buildOffDatesForUser(): array
+	{
+		$offDates = [];
+
+		$end = Carbon::today(self::TZ);
+		$start = $end->copy()->subDays(self::DAYS - 1);
+
+		$cursor = $start->copy()->startOfWeek(Carbon::MONDAY);
+
+		while ($cursor->lte($end)) {
+			$weekDays = [];
+
+			for ($d = 0; $d < 7; $d++) {
+				$day = $cursor->copy()->addDays($d);
+
+				if ($day->lt($start) || $day->gt($end)) {
+					continue;
+				}
+
+				$weekDays[] = $day->toDateString();
+			}
+
+			if (count($weekDays) > 0) {
+				$pick = min(self::OFF_DAYS_PER_WEEK, count($weekDays));
+
+				$pickedKeys = array_rand($weekDays, $pick);
+				$pickedKeys = is_array($pickedKeys) ? $pickedKeys : [$pickedKeys];
+
+				foreach ($pickedKeys as $key) {
+					$offDates[$weekDays[$key]] = true;
+				}
+			}
+
+			$cursor->addWeek();
+		}
+
+		return $offDates;
 	}
 }

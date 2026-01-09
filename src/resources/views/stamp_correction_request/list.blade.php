@@ -21,12 +21,12 @@ $isPendingTab = $tab === 'pending';
 
 		<div class="request-tabs">
 			<a
-				href="{{ route('stamp_correction_request.user_index', ['tab' => 'pending']) }}"
+				href="{{ route('stamp_correction_request.list', ['tab' => 'pending']) }}"
 				class="request-tab{{ $isPendingTab ? ' is-active' : '' }}">
 				承認待ち
 			</a>
 			<a
-				href="{{ route('stamp_correction_request.user_index', ['tab' => 'approved']) }}"
+				href="{{ route('stamp_correction_request.list', ['tab' => 'approved']) }}"
 				class="request-tab{{ !$isPendingTab ? ' is-active' : '' }}">
 				承認済み
 			</a>
@@ -71,7 +71,7 @@ $isPendingTab = $tab === 'pending';
 							@if ($requestRow->attendance)
 							<a
 								href="{{ route('attendance.detail', [
-									'attendance'   => $requestRow->attendance->id,
+									'id'           => $requestRow->attendance->id,
 									'from_request' => 1,
 									'request_id'   => $requestRow->id,
 									]) }}"

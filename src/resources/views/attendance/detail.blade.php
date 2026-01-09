@@ -19,7 +19,7 @@ $canEdit = $isEditable && !$requestStatus;
 		<div class="attendance-detail-card">
 
 			<form
-				action="{{ route('stamp_correction_request.store', ['attendance' => $attendance->id]) }}"
+				action="{{ route('stamp_correction_request.store', ['id' => $attendance->id]) }}"
 				method="post"
 				id="attendance-detail-form"
 				class="attendance-detail-form">
