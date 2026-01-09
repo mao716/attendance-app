@@ -150,7 +150,7 @@ class AttendanceController extends Controller
 
 		$attendance = Attendance::with('breaks')
 			->where('user_id', $user->id)
-			->where('work_date', $today->toDateString())
+			->whereDate('work_date', $today)
 			->first();
 
 		if (! $attendance || ! $attendance->isWorking() || $attendance->clock_out_at) {

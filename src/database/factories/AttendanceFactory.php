@@ -4,124 +4,136 @@ namespace Database\Factories;
 
 use App\Models\Attendance;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 class AttendanceFactory extends Factory
 {
 	protected $model = Attendance::class;
 
+	private const TZ = 'Asia/Tokyo';
+
 	public function definition(): array
 	{
-		// ★ デフォルトの勤務日（stateで上書き可能）
-		$workDate = $this->faker->dateTimeBetween('-30 days', 'yesterday')->format('Y-m-d');
-
-		// 出勤時間（09:00〜11:00）
-		$clockIn = Carbon::parse($this->faker->dateTimeBetween(
-			"{$workDate} 09:00:00",
-			"{$workDate} 11:00:00"
-		));
-
-		// 退勤時間（17:00〜20:00）
-		$clockOut = Carbon::parse($this->faker->dateTimeBetween(
-			"{$workDate} 17:00:00",
-			"{$workDate} 20:00:00"
-		));
-
-		$workMinutes = $clockIn->diffInMinutes($clockOut);
-
-		$breakMinutes = $this->faker->numberBetween(30, 90);
-		if ($workMinutes <= 0) {
-			$workMinutes = 0;
-			$breakMinutes = 0;
-		} elseif ($breakMinutes >= $workMinutes) {
-			$breakMinutes = $workMinutes - 1;
-		}
-
-		$workingMinutes = $workMinutes - $breakMinutes;
-
 		return [
-			// user_id はSeederやテストで渡す前提でもOK。渡されない時だけ作るならこれ
-			'user_id'             => User::inRandomOrder()->first()?->id ?? User::factory(),
-			'work_date'           => $workDate,
-			'clock_in_at'         => $clockIn,
-			'clock_out_at'        => $clockOut,
-			'total_break_minutes' => $breakMinutes,
-			'working_minutes'     => $workingMinutes,
-			'status'              => 4,
+			'user_id'             => User::factory(),
+			'work_date'           => now(self::TZ)->toDateString(),
+			'clock_in_at'         => null,
+			'clock_out_at'        => null,
+			'total_break_minutes' => 0,
+			'working_minutes'     => 0,
+			'status'              => Attendance::STATUS_OFF,
+			'note'                => null,
 		];
 	}
 
 	public function forDate(string $workDate): static
 	{
-		return $this->state(fn() => ['work_date' => $workDate]);
+		return $this->state(fn() => [
+			'work_date' => Carbon::createFromFormat('Y-m-d', $workDate, self::TZ)->toDateString(),
+		]);
 	}
 
-	public function clockedInOnly(): static
+	public function working(?string $workDate = null): static
 	{
-		return $this->state(function (array $attributes) {
-			// clock_in_at が無いなら作る（work_date が無い場合にも対応）
-			$workDate = $attributes['work_date'] ?? now()->subDay()->toDateString();
+		return $this->state(function () use ($workDate) {
+			$date = Carbon::createFromFormat(
+				'Y-m-d',
+				$workDate ?? now(self::TZ)->toDateString(),
+				self::TZ
+			);
 
-			$clockIn = $attributes['clock_in_at']
-				? Carbon::parse($attributes['clock_in_at'])
-				: Carbon::parse($workDate)->setTime(rand(9, 11), rand(0, 59), rand(0, 59));
+			$clockIn = $date->copy()->setTime(rand(8, 11), rand(0, 59), 0);
 
 			return [
-				'work_date'           => $workDate,
+				'work_date'           => $date->toDateString(),
 				'clock_in_at'         => $clockIn,
 				'clock_out_at'        => null,
 				'total_break_minutes' => 0,
 				'working_minutes'     => 0,
-				'status'              => 1, // 出勤中（あなたの定義に合わせて）
+				'status'              => Attendance::STATUS_WORKING,
 			];
 		});
 	}
 
-	public function clockedOut(): static
+	public function onBreak(?string $workDate = null): static
 	{
-		return $this->state(function (array $attributes) {
-			$workDate = $attributes['work_date'] ?? now()->subDay()->toDateString();
+		return $this->state(function () use ($workDate) {
+			$date = Carbon::createFromFormat(
+				'Y-m-d',
+				$workDate ?? now(self::TZ)->toDateString(),
+				self::TZ
+			);
 
-			$clockIn = $attributes['clock_in_at']
-				? Carbon::parse($attributes['clock_in_at'])
-				: Carbon::parse($workDate)->setTime(rand(9, 11), rand(0, 59), rand(0, 59));
+			$clockIn = $date->copy()->setTime(rand(8, 11), rand(0, 59), 0);
 
-			$clockOut = $attributes['clock_out_at']
-				? Carbon::parse($attributes['clock_out_at'])
-				: Carbon::parse($workDate)->setTime(rand(17, 20), rand(0, 59), rand(0, 59));
+			return [
+				'work_date'           => $date->toDateString(),
+				'clock_in_at'         => $clockIn,
+				'clock_out_at'        => null,
+				'total_break_minutes' => 0,
+				'working_minutes'     => 0,
+				'status'              => Attendance::STATUS_BREAK,
+			];
+		});
+	}
 
-			if ($clockOut->lte($clockIn)) {
-				$clockOut = Carbon::parse($workDate)->setTime(20, 0, 0);
-			}
+	public function finished(?string $workDate = null, ?int $breakMinutes = null): static
+	{
+		return $this->state(function () use ($workDate, $breakMinutes) {
+			$date = Carbon::createFromFormat(
+				'Y-m-d',
+				$workDate ?? now(self::TZ)->toDateString(),
+				self::TZ
+			);
 
-			$workMinutes = $clockIn->diffInMinutes($clockOut);
+			$clockIn = $date->copy()->setTime(rand(8, 13), rand(0, 59), 0);
 
-			$breakMinutes = $attributes['total_break_minutes']
-				?? $this->faker->numberBetween(30, 90);
+			$workingMinutes = rand(6, 8) * 60;
+			$break = $breakMinutes ?? rand(30, 60);
+			$totalMinutes = $workingMinutes + $break;
 
-			if ($breakMinutes >= $workMinutes) {
-				$breakMinutes = max(0, $workMinutes - 1);
+			$clockOut = $clockIn->copy()->addMinutes($totalMinutes);
+
+			$endLimit = $date->copy()->setTime(20, 0, 0);
+			if ($clockOut->gt($endLimit)) {
+				$clockOut = $endLimit->copy();
+				$clockIn = $clockOut->copy()->subMinutes($totalMinutes);
+
+				$startLimit = $date->copy()->setTime(8, 0, 0);
+				if ($clockIn->lt($startLimit)) {
+					$clockIn = $startLimit->copy();
+					$clockOut = $clockIn->copy()->addMinutes($totalMinutes);
+
+					if ($clockOut->gt($endLimit)) {
+						$clockOut = $endLimit->copy();
+					}
+				}
 			}
 
 			return [
-				'work_date'           => $workDate,
+				'work_date'           => $date->toDateString(),
 				'clock_in_at'         => $clockIn,
 				'clock_out_at'        => $clockOut,
-				'total_break_minutes' => $breakMinutes,
-				'working_minutes'     => max(0, $workMinutes - $breakMinutes),
-				'status'              => 4, // 退勤済（あなたの定義に合わせて）
+				'total_break_minutes' => $break,
+				'working_minutes'     => $workingMinutes,
+				'status'              => Attendance::STATUS_FINISHED,
 			];
 		});
 	}
 
-	public function clockedOutOn(string $workDate): static
+	public function finishedOn(string $workDate, ?int $breakMinutes = null): static
 	{
-		return $this->forDate($workDate)->clockedOut();
+		return $this->finished($workDate, $breakMinutes);
 	}
 
-	public function clockedInOnlyOn(string $workDate): static
+	public function workingOn(string $workDate): static
 	{
-		return $this->forDate($workDate)->clockedInOnly();
+		return $this->working($workDate);
+	}
+
+	public function onBreakOn(string $workDate): static
+	{
+		return $this->onBreak($workDate);
 	}
 }

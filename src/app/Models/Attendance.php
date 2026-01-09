@@ -37,7 +37,8 @@ class Attendance extends Model
 	// Casts
 	// ====================
 	protected $casts = [
-		'work_date'   => 'date',
+		'work_date' => 'date:Y-m-d',
+		'status' => 'int',
 		'clock_in_at' => 'datetime',
 		'clock_out_at' => 'datetime',
 	];
