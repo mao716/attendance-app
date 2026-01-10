@@ -23,7 +23,6 @@ class EmailVerificationTest extends TestCase
 
 	private function makeVerificationUrl(User $user): string
 	{
-		// Fortify標準の署名付きURLを生成（通知の中身と同じ仕組み）
 		return URL::temporarySignedRoute(
 			'verification.verify',
 			now()->addMinutes(60),
@@ -46,7 +45,6 @@ class EmailVerificationTest extends TestCase
 			'password_confirmation' => 'password123',
 		];
 
-		// Fortifyの会員登録（プロジェクトで route('register') が生きてる前提）
 		$response = $this->post(route('register'), $payload);
 		$response->assertStatus(302);
 
@@ -76,15 +74,13 @@ class EmailVerificationTest extends TestCase
 
 		$verificationUrl = $this->makeVerificationUrl($user);
 
-		// 認証リンクを踏む（Fortify標準：GET verification.verify）
 		$this->actingAs($user)
 			->get($verificationUrl)
-			->assertStatus(302); // 通常は /attendance 等へリダイレクト
+			->assertStatus(302);
 
 		$user->refresh();
 		$this->assertNotNull($user->email_verified_at);
 
-		// 認証済みなら attendance に入れる
 		$this->actingAs($user)
 			->get(route('attendance.index'))
 			->assertOk();

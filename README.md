@@ -127,6 +127,9 @@ docker compose exec php php artisan migrate --seed
 |------------------------|----------------|
 | admin@coachtech.com      | password123    |
 
+管理者ログイン画面：`http://localhost/admin/login`
+
+
 ### ▼ 一般ユーザー（6名）
 
 | 名前       | メールアドレス         | パスワード     |
@@ -138,6 +141,8 @@ docker compose exec php php artisan migrate --seed
 | 秋田 朋美  | tomomi.a@coachtech.com        | password123    |
 | 中西 教夫  | norio.n@coachtech.com        | password123    |
 
+一般ユーザーログイン画面：`http://localhost/login`
+
 ---
 
 ## 6. ER 図
@@ -148,7 +153,7 @@ docker compose exec php php artisan migrate --seed
 
 ## 7. テーブル一覧
 
-主要テーブル：
+本アプリでは、要件シートのテーブル仕様書に基づき、以下のテーブルで構成されています。
 
 - users
 - attendances
@@ -156,7 +161,8 @@ docker compose exec php php artisan migrate --seed
 - stamp_correction_requests
 - stamp_correction_breaks
 
-※ カラム定義・制約はテーブル仕様書に準拠。
+※ テーブル数は 5 件で、要件にある「10 個以内」を満たしています。
+※ 各テーブルのカラム定義・制約（PK / FK / UNIQUE / NOT NULL）は、提出済みのテーブル仕様書に準拠しています。
 
 ---
 
