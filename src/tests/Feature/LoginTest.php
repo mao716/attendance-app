@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class LoginTest extends TestCase
@@ -19,10 +20,10 @@ class LoginTest extends TestCase
 		], $overrides);
 	}
 
-	/** @test */
+	#[Test]
 	public function email_is_required(): void
 	{
-		$user = User::factory()->create([
+		User::factory()->create([
 			'email' => 'test@example.com',
 			'password' => Hash::make('password12'),
 			'role' => 1,
@@ -37,10 +38,10 @@ class LoginTest extends TestCase
 		$this->assertGuest();
 	}
 
-	/** @test */
+	#[Test]
 	public function password_is_required(): void
 	{
-		$user = User::factory()->create([
+		User::factory()->create([
 			'email' => 'test@example.com',
 			'password' => Hash::make('password12'),
 			'role' => 1,
@@ -55,10 +56,10 @@ class LoginTest extends TestCase
 		$this->assertGuest();
 	}
 
-	/** @test */
+	#[Test]
 	public function login_fails_with_invalid_credentials(): void
 	{
-		$user = User::factory()->create([
+		User::factory()->create([
 			'email' => 'test@example.com',
 			'password' => Hash::make('password12'),
 			'role' => 1,

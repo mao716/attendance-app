@@ -6,13 +6,14 @@ use App\Models\Attendance;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class ClockInTest extends TestCase
 {
 	use RefreshDatabase;
 
-	/** @test */
+	#[Test]
 	public function clock_in_button_works_and_creates_attendance_for_today(): void
 	{
 		Carbon::setTestNow(Carbon::parse('2026-01-09 09:00:00'));
@@ -35,7 +36,7 @@ class ClockInTest extends TestCase
 		$this->assertNotNull($attendance->clock_in_at);
 	}
 
-	/** @test */
+	#[Test]
 	public function clock_in_is_allowed_only_once_per_day_and_button_is_not_visible_after_clock_out(): void
 	{
 		Carbon::setTestNow(Carbon::parse('2026-01-09 18:00:00'));
@@ -61,7 +62,7 @@ class ClockInTest extends TestCase
 		$response->assertDontSee(route('attendance.clock_in'), false);
 	}
 
-	/** @test */
+	#[Test]
 	public function clock_in_time_is_visible_in_attendance_list(): void
 	{
 		Carbon::setTestNow(Carbon::parse('2026-01-09 09:10:00'));

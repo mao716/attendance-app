@@ -149,7 +149,7 @@ class StampCorrectionRequestController extends Controller
 			}
 		}
 
-		return redirect()->route('stamp_correction_request.user_index');
+		return redirect()->route('stamp_correction_request.list');
 	}
 
 	public function showForUser(StampCorrectionRequest $stampCorrectionRequest): View

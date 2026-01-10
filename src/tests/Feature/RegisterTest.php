@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class RegisterTest extends TestCase
@@ -19,7 +20,7 @@ class RegisterTest extends TestCase
 		], $overrides);
 	}
 
-	/** @test */
+	#[Test]
 	public function name_is_required(): void
 	{
 		$response = $this->post('/register', $this->validPayload([
@@ -30,7 +31,7 @@ class RegisterTest extends TestCase
 		$this->assertContains('お名前を入力してください', session('errors')->get('name'));
 	}
 
-	/** @test */
+	#[Test]
 	public function email_is_required(): void
 	{
 		$response = $this->post('/register', $this->validPayload([
@@ -41,7 +42,7 @@ class RegisterTest extends TestCase
 		$this->assertContains('メールアドレスを入力してください', session('errors')->get('email'));
 	}
 
-	/** @test */
+	#[Test]
 	public function password_must_be_at_least_8_characters(): void
 	{
 		$response = $this->post('/register', $this->validPayload([
@@ -53,7 +54,7 @@ class RegisterTest extends TestCase
 		$this->assertContains('パスワードは8文字以上で入力してください', session('errors')->get('password'));
 	}
 
-	/** @test */
+	#[Test]
 	public function password_confirmation_must_match(): void
 	{
 		$response = $this->post('/register', $this->validPayload([
@@ -65,7 +66,7 @@ class RegisterTest extends TestCase
 		$this->assertContains('パスワードと一致しません', session('errors')->get('password_confirmation'));
 	}
 
-	/** @test */
+	#[Test]
 	public function password_is_required(): void
 	{
 		$response = $this->post('/register', $this->validPayload([
@@ -77,7 +78,7 @@ class RegisterTest extends TestCase
 		$this->assertContains('パスワードを入力してください', session('errors')->get('password'));
 	}
 
-	/** @test */
+	#[Test]
 	public function user_can_register_with_valid_input(): void
 	{
 		$payload = $this->validPayload([

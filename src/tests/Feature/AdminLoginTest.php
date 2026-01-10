@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class AdminLoginTest extends TestCase
@@ -29,7 +30,7 @@ class AdminLoginTest extends TestCase
 		return 2;
 	}
 
-	/** @test */
+	#[Test]
 	public function email_is_required(): void
 	{
 		User::factory()->create([
@@ -47,7 +48,7 @@ class AdminLoginTest extends TestCase
 		$this->assertGuest();
 	}
 
-	/** @test */
+	#[Test]
 	public function password_is_required(): void
 	{
 		User::factory()->create([
@@ -65,7 +66,7 @@ class AdminLoginTest extends TestCase
 		$this->assertGuest();
 	}
 
-	/** @test */
+	#[Test]
 	public function login_fails_with_invalid_credentials(): void
 	{
 		User::factory()->create([
